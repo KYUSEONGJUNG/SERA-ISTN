@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE form-validation PUBLIC 
+    "-//Apache Software Foundation//DTD Commons Validator Rules Configuration 1.1//EN" 
+    "http://jakarta.apache.org/commons/dtds/validator_1_1.dtd">
+
+<form-validation>
+
+    <formset>
+
+        <form name="pstinstVO"> 
+            
+            <field property="name" depends="required, maxlength">
+                <arg0 key="고객사명" resource="false"/>
+                <arg1 key="100" resource="false"/>
+                <var>
+                <var-name>maxlength</var-name>
+                <var-value>100</var-value>
+                </var>
+            </field>
+            
+            <field property="ename" depends="required, maxlength">
+                <arg0 key="고객사 영문명" resource="false"/>
+                <arg1 key="100" resource="false"/>
+                <var>
+                <var-name>maxlength</var-name>
+                <var-value>100</var-value>
+                </var>
+            </field>
+            
+            <field property="pstinstAbrv" depends="required">
+                <arg0 key="고객사약어" resource="false"/>
+            </field> 
+                        
+        </form>
+        
+    </formset>
+
+</form-validation>

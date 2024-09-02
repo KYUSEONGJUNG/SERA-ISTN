@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="StsfdgSttus">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="StsfdgSttusVO" type="egovframework.let.sts.stsfdg.service.StsfdgSttusVO"/>
+	
+	<resultMap id="stsfdgSttusReport" class="egovframework.let.sts.stsfdg.service.StsfdgSttusVO">
+		<result property="moduleName" column="MODULE_NAME"/>
+		<result property="moduleNameEn" column="MODULE_NAME_EN"/>
+		<result property="moduleNameCn" column="MODULE_NAME_CN"/>
+		<result property="totalCount" column="TOTAL_COUNT"/>
+		<result property="completeCount" column="COMPLETE_COUNT"/>
+		<result property="uncompleteCount" column="UNCOMPLETE_COUNT"/>
+		<result property="value5" column="VALUE5"/>
+		<result property="value4" column="VALUE4"/>
+		<result property="value3" column="VALUE3"/>
+		<result property="value2" column="VALUE2"/>
+		<result property="value1" column="VALUE1"/>
+		<result property="avgValue" column="AVG_VALUE"/>
+	</resultMap>
+		
+	<!-- SR처리율 조회 -->
+	<select id="StsfdgSttusDAO.selectStsfdgSttus" parameterClass="StsfdgSttusVO" resultClass="egovMap">
+		<!-- 만족도현황 조회 -->
+		SELECT  *
+		  FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.moduleCode ASC) RNUM,
+			   Round(ALL_LIST.avgValue_s,2) AS avgValue, ALL_LIST.* 
+		  FROM  (
+		/* 구현 Sql */
+		SELECT A.MODULE_CODE AS moduleCode
+			, B.CODE_NM AS moduleName
+			, B.CODE_NM_EN AS moduleNameEn
+			, B.CODE_NM_CN AS moduleNameCn
+			, COUNT(1) AS totalCount
+			, COUNT(CASE STATUS WHEN '1006' THEN 1 END) AS completeCount
+			, COUNT(CASE WHEN STATUS != '1006' THEN 1 END) AS unCompleteCount
+			, COUNT(CASE `POINT` WHEN '5' THEN 1 END) AS value5
+			, COUNT(CASE `POINT` WHEN '4' THEN 1 END) AS value4
+			, COUNT(CASE `POINT` WHEN '3' THEN 1 END) AS value3
+			, COUNT(CASE `POINT` WHEN '2' THEN 1 END) AS value2
+			, COUNT(CASE `POINT` WHEN '1' THEN 1 END) AS value1
+			, ROUND(CAST(SUM(CASE WHEN `POINT` > '0' THEN `POINT` END) AS FLOAT) / CAST(COUNT(1) AS FLOAT),2) AS avgValue_s
+		FROM SRMANAGE A
+		LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+			ON  B.CODE_ID = 'SR0003' AND B.CODE = A.MODULE_CODE 
+		WHERE 1 = 1
+		<isNotEmpty prepend="AND" property="pstinstCode">
+			PSTINST_CODE = #pstinstCode#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="searchDateF">
+			<![CDATA[ DATE_FORMAT(TEST_COMPLETE_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="searchDateT">
+			<![CDATA[ DATE_FORMAT(TEST_COMPLETE_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+		</isNotEmpty>
+		GROUP BY A.MODULE_CODE
+		UNION
+			SELECT '9999' AS moduleCode
+			, '합계' AS moduleName
+			, 'Total' AS moduleNameEn
+			, '总计' AS moduleNameCn
+			, COUNT(1) AS totalCount
+			, COUNT(CASE STATUS WHEN '1006' THEN 1 END) AS completeCount
+			, COUNT(CASE WHEN STATUS != '1006' THEN 1 END) AS unCompleteCount
+			, COUNT(CASE `POINT` WHEN '5' THEN 1 END) AS value5
+			, COUNT(CASE `POINT` WHEN '4' THEN 1 END) AS value4
+			, COUNT(CASE `POINT` WHEN '3' THEN 1 END) AS value3
+			, COUNT(CASE `POINT` WHEN '2' THEN 1 END) AS value2
+			, COUNT(CASE `POINT` WHEN '1' THEN 1 END) AS value1
+			, ROUND(CAST(SUM(CASE WHEN `POINT` > '0' THEN `POINT` END) AS FLOAT) / CAST(COUNT(1) AS FLOAT) ,2) AS avgValue_s
+		FROM SRMANAGE A
+		LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+			ON  B.CODE_ID = 'SR0003' AND B.CODE = A.MODULE_CODE 
+		WHERE 1 = 1
+	    <isNotEmpty prepend="AND" property="pstinstCode">
+			PSTINST_CODE = #pstinstCode#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="searchDateF">
+			<![CDATA[ DATE_FORMAT(TEST_COMPLETE_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="searchDateT">
+			<![CDATA[ DATE_FORMAT(TEST_COMPLETE_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+		</isNotEmpty>     
+	        
+	    <![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+				    ) TA
+		]]>	
+	</select>
+	
+	<!-- SR총 수량을 가져온다. -->
+	<select id="StsfdgSttusDAO.selectStsfdgSttusTotCnt" parameterClass="StsfdgSttusVO" resultClass="int">
+
+		SELECT COUNT(*) as totCnt 
+		  FROM ( SELECT A.MODULE_CODE
+				  FROM SRMANAGE A INNER JOIN SRCOMPANY B ON A.PSTINST_CODE = B.PSTINST_CODE AND DEL_AT = 'N'
+				 WHERE 1 = 1  
+				   AND STATUS = '1006'
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						A.PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+			 	 	<isNotEmpty prepend="AND" property="searchDateF">
+			 	 		<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchDateT">
+						<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+					</isNotEmpty>
+			         ) AS ALL_LIST
+	        
+	</select>
+	
+	<!-- SR 만족도 현황 엑셀 다운로드 -->
+	<select id="StsfdgSttusDAO.excelDownSrStsfdgSttusReportList" parameterClass="StsfdgSttusVO" resultMap="stsfdgSttusReport">
+		<!-- 만족도현황 조회 -->
+		SELECT  *
+			FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.MODULE_CODE ASC) RNUM,
+				Round(ALL_LIST.AVG_VALUE_S,2) AS AVG_VALUE, ALL_LIST.* 
+			FROM  (
+		/* 구현 Sql */
+		SELECT A.MODULE_CODE AS MODULE_CODE
+			, B.CODE_NM AS MODULE_NAME
+			, B.CODE_NM_EN AS MODULE_NAME_EN
+			, B.CODE_NM_CN AS MODULE_NAME_CN
+			, COUNT(1) AS TOTAL_COUNT
+			, COUNT(CASE STATUS WHEN '1006' THEN 1 END) AS COMPLETE_COUNT
+			, COUNT(CASE WHEN STATUS != '1006' THEN 1 END) AS UNCOMPLETE_COUNT
+			, COUNT(CASE `POINT` WHEN '5' THEN 1 END) AS VALUE5
+			, COUNT(CASE `POINT` WHEN '4' THEN 1 END) AS VALUE4
+			, COUNT(CASE `POINT` WHEN '3' THEN 1 END) AS VALUE3
+			, COUNT(CASE `POINT` WHEN '2' THEN 1 END) AS VALUE2
+			, COUNT(CASE `POINT` WHEN '1' THEN 1 END) AS VALUE1
+			, ROUND(CAST(SUM(CASE WHEN `POINT` > '0' THEN `POINT` END) AS FLOAT) / CAST(COUNT(1) AS FLOAT), 2) AS AVG_VALUE_S
+		FROM SRMANAGE A
+		LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+			ON  B.CODE_ID = 'SR0003' AND B.CODE = A.MODULE_CODE 
+		WHERE 1 = 1
+		<isNotEmpty property="pstinstCodeArr" prepend="AND">
+			<![CDATA[
+			 A.PSTINST_CODE
+			]]>
+			<iterate prepend="IN" property="pstinstCodeArr" open="(" close=")" conjunction=",">
+			 #pstinstCodeArr[]#
+			</iterate>
+		</isNotEmpty>
+   		<isEmpty property="pstinstCodeArr">
+   			<isNotEmpty prepend="AND" property="pstinstCode">
+				A.PSTINST_CODE = #pstinstCode#
+			</isNotEmpty>
+   		</isEmpty>
+		<isNotEmpty prepend="AND" property="searchDateF">
+			<![CDATA[ DATE_FORMAT(TEST_COMPLETE_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="searchDateT">
+			<![CDATA[ DATE_FORMAT(TEST_COMPLETE_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+		</isNotEmpty>
+		GROUP BY A.MODULE_CODE
+		UNION
+			SELECT '9999' AS moduleCode
+			, '합계' AS moduleName
+			, 'Total' AS moduleNameEn
+			, '总计' AS moduleNameCn
+			, COUNT(1) AS totalCount
+			, COUNT(CASE STATUS WHEN '1006' THEN 1 END) AS completeCount
+			, COUNT(CASE WHEN STATUS != '1006' THEN 1 END) AS unCompleteCount
+			, COUNT(CASE `POINT` WHEN '5' THEN 1 END) AS value5
+			, COUNT(CASE `POINT` WHEN '4' THEN 1 END) AS value4
+			, COUNT(CASE `POINT` WHEN '3' THEN 1 END) AS value3
+			, COUNT(CASE `POINT` WHEN '2' THEN 1 END) AS value2
+			, COUNT(CASE `POINT` WHEN '1' THEN 1 END) AS value1
+			, ROUND(CAST(SUM(CASE WHEN `POINT` > '0' THEN `POINT` END) AS FLOAT) / CAST(COUNT(1) AS FLOAT), 2) AS avgValue_s
+		FROM SRMANAGE A
+		LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+			ON  B.CODE_ID = 'SR0003' AND B.CODE = A.MODULE_CODE 
+		WHERE 1 = 1
+		<isNotEmpty property="pstinstCodeArr" prepend="AND">
+			<![CDATA[
+			 A.PSTINST_CODE
+			]]>
+			<iterate prepend="IN" property="pstinstCodeArr" open="(" close=")" conjunction=",">
+			 #pstinstCodeArr[]#
+			</iterate>
+		</isNotEmpty>
+   		<isEmpty property="pstinstCodeArr">
+   			<isNotEmpty prepend="AND" property="pstinstCode">
+				A.PSTINST_CODE = #pstinstCode#
+			</isNotEmpty>
+   		</isEmpty>
+		<isNotEmpty prepend="AND" property="searchDateF">
+			<![CDATA[ DATE_FORMAT(TEST_COMPLETE_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="searchDateT">
+			<![CDATA[ DATE_FORMAT(TEST_COMPLETE_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+		</isNotEmpty>     
+			
+		<![CDATA[
+			/* 구현 Sql */
+					) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+					) TA
+		]]>
+	</select>	
+</sqlMap>

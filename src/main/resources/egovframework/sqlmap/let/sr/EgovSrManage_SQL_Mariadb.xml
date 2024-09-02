@@ -1,0 +1,1868 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="SrManage">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="Sr"     type="egovframework.let.sr.service.Sr"/>
+	<typeAlias  alias="SrVO"   type="egovframework.let.sr.service.SrVO"/>
+	<typeAlias  alias="LoginVO"   type="egovframework.let.main.service.com.cmm.LoginVO"/>
+	<typeAlias  alias="SrAnswerVO"   type="egovframework.let.sr.service.SrAnswerVO"/>
+	<typeAlias  alias="SrCtsVO"  type="egovframework.let.sr.service.SrCtsVO"/>
+
+	<resultMap id="srReport" class="egovframework.let.sr.service.SrVO">
+		<result property="srNo" column="SR_NO"/>
+		<result property="subject" column="SUBJECT"/>
+		<result property="moduleNm" column="MODULE_NM"/>
+		<result property="categoryNm" column="CATEGORY_NM"/>
+		<result property="statusNm" column="STATUS_NM"/>
+		<result property="status" column="STATUS"/>
+		<result property="customerNm" column="CUSTOMER_NM"/>
+		<result property="signDate" column="SIGN_DATE"/>
+		<result property="scheduleDate" column="SCHEDULE_DATE"/>
+		<result property="rname" column="RNAME"/>
+		<result property="completeDate" column="COMPLETE_DATE"/>
+		<result property="testCompleteDate" column="TEST_COMPLETE_DATE"/>
+		<result property="realExpectTime" column="REAL_EXPECT_TIME"/>
+		<result property="abapRealExpectTime" column="ABAP_REAL_EXPECT_TIME"/>
+		<result property="pstinstNm" column="PSTINST_NM"/>
+		<result property="tcode" column="TCODE"/>
+		<result property="point" column="POINT"/>
+		<result property="comment" column="COMMENT"/>
+		<result property="ansComment" column="ANS_COMMENT"/>
+		<result property="moduleNmEn" column="MODULE_NM_EN"/>
+		<result property="moduleNmCn" column="MODULE_NM_CN"/>
+		<result property="categoryNmEn" column="CATEGORY_NM_EN"/>
+		<result property="categoryNmCn" column="CATEGORY_NM_CN"/>
+		<result property="statusNmEn" column="STATUS_NM_EN"/>
+		<result property="statusNmCn" column="STATUS_NM_CN"/>
+		<result property="rnameEn" column="RNAME_EN"/>		
+		<result property="pstinstNmEn" column="PSTINST_NM_EN"/>
+	</resultMap>
+	
+	<resultMap id="srDetail" class="egovframework.let.sr.service.SrVO">
+		<result property="srNo" column="SR_NO"/>
+		<result property="subject" column="SUBJECT"/>
+		<result property="moduleNm" column="MODULE_NM"/>
+		<result property="categoryNm" column="CATEGORY_NM"/>
+		<result property="statusNm" column="STATUS_NM"/>
+		<result property="customerNm" column="CUSTOMER_NM"/>
+		<result property="signDate" column="SIGN_DATE"/>
+		<result property="scheduleDate" column="SCHEDULE_DATE"/>
+		<result property="rname" column="RNAME"/>
+		<result property="abapRname" column="ABAP_RNAME"/>
+		<result property="completeDate" column="COMPLETE_DATE"/>
+		<result property="testCompleteDate" column="TEST_COMPLETE_DATE"/>
+		<result property="comment" column="COMMENT"/>
+		<result property="ansComment" column="ANS_COMMENT"/>
+		<result property="ansRealExpectTime" column="ANS_REAL_EXPECT_TIME"/>
+		<result property="pstinstNm" column="PSTINST_NM"/>
+		<result property="ansModuleNm" column="ANS_MODULE_NM"/>		
+	</resultMap>
+	
+	<resultMap id="srEmail" class="egovframework.let.sr.service.SrVO">
+		<result property="email" column="EMAIL_ADRES"/>
+		<result property="sendLanguage" column="LANGUAGE_CODE"/>
+	</resultMap>	
+	
+	<resultMap id="srEmailHisto" class="egovframework.let.sr.service.SrVO">
+		<result property="mailNo" column="MAIL_NO"/>
+		<result property="mailSenderEmplyrNm" column="SENDER_EMPLYR_NM"/>
+		<result property="mailSenderEmail" column="SENDER_EMAIL"/>
+		<result property="mailReceiverEmail" column="RECEIVER_EMAIL"/>
+		<result property="mailSubject" column="SUBJECT"/>
+		<result property="mailComment" column="COMMENT"/>
+		<result property="mailFileId" column="FILE_ID"/>
+		
+	</resultMap>	
+   
+	<select id="SrManageDAO.selectSrList" parameterClass="SrVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT  * 
+			  FROM  (
+			SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.SIGN_DATE DESC, ALL_LIST.SR_NO DESC) RNUM, ALL_LIST.* 
+			  FROM  (
+			/* 구현 Sql */
+			
+			SELECT A.SR_NO
+				,  A.PSTINST_CODE
+				,  A.CUSTOMER_ID
+				,  A.SUBJECT
+				,  A.TEL1
+				,  A.TEL2
+				,  A.EMAIL
+				,  A.STATUS
+				,  A.MODULE_CODE
+				,  A.CATEGORY
+				,  A.PRIORITY
+				,  DATE_FORMAT(A.HOPE_DATE,'%Y-%m-%d') AS HOPE_DATE
+				,  DATE_FORMAT(A.SCHEDULE_DATE,'%Y-%m-%d') AS SCHEDULE_DATE
+				,  DATE_FORMAT(A.COMPLETE_DATE,'%Y-%m-%d') AS COMPLETE_DATE
+				,  DATE_FORMAT( A.TEST_COMPLETE_DATE,'%Y-%m-%d') AS TEST_COMPLETE_DATE
+				,  A.EXPECT_TIME
+				,  A.REAL_EXPECT_TIME
+				,  A.RID
+				,  A.TCODE
+				,  A.TEST_AT
+				,  A.TEST_CONTENT
+				,  CASE A.TEST_AT WHEN 'Y' THEN 'Y' ELSE 'N' END AS TAT
+				,  A.POINT
+				,  A.POINT_CONTENT
+				,  A.COMMENT
+				,  A.RETURN_RESN
+				,  A.FILE_ID
+				,  DATE_FORMAT( A.SIGN_DATE,'%Y-%m-%d') AS SIGN_DATE
+				,  DATE_FORMAT(A.REPLY_DATE,'%Y-%m-%d') AS REPLY_DATE
+				,  DATE_FORMAT(A.EDIT_DATE,'%Y-%m-%d') AS EDIT_DATE
+				,  DATE_FORMAT(A.CONFIRM_DATE,'%Y-%m-%d') AS CONFIRM_DATE
+				,  A.SANCTNER_AT
+				,  B.NAME AS PSTINST_NM
+				,  C.USER_NM AS CUSTOMER_NM
+                ,  D.USER_NM AS RNAME
+                ,  D.USER_NM_EN AS RNAME_EN 
+                , A.ABAP_RID
+                , F.USER_NM AS ABAP_RNAME
+			  FROM  SRMANAGE A
+				INNER JOIN SRCOMPANY B ON B.PSTINST_CODE = A.PSTINST_CODE AND B.DEL_AT = 'N'
+				LEFT OUTER JOIN LETTNEMPLYRINFO C ON C.EMPLYR_ID = A.CUSTOMER_ID
+				LEFT OUTER JOIN LETTNEMPLYRINFO D ON D.EMPLYR_ID = A.RID
+				LEFT OUTER JOIN LETTNEMPLYRINFO F ON F.EMPLYR_ID = A.ABAP_RID	
+		]]>	
+			WHERE	1 = 1
+			 AND A.SR_NO IN (
+			 	SELECT *
+				 FROM (
+					SELECT DISTINCT A.SR_NO 
+				 	  FROM SRMANAGE A
+				 	  LEFT OUTER JOIN LETTNEMPLYRINFO C ON C.EMPLYR_ID = A.CUSTOMER_ID
+				 	  <isNotEmpty property="searchSubject">
+						<isNotEmpty property="searchContentFlag">
+							LEFT OUTER JOIN SRMANAGE_ANSWER E ON E.SR_NO = A.SR_NO
+						</isNotEmpty>
+					  </isNotEmpty>
+				 	  WHERE 1 = 1
+				 	  	<isNotEmpty prepend="AND" property="searchConfirmDateF">
+							<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') >= #searchConfirmDateF#   ]]>
+						</isNotEmpty>
+						<isNotEmpty prepend="AND" property="searchConfirmDateT">
+							<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') <= #searchConfirmDateT#   ]]>
+						</isNotEmpty>
+						<isNotEmpty prepend="AND" property="searchCompleteDateF">
+							<![CDATA[ DATE_FORMAT( A.TEST_COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+						</isNotEmpty>
+						<isNotEmpty prepend="AND" property="searchCompleteDateT">
+							<![CDATA[ DATE_FORMAT( A.TEST_COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+						</isNotEmpty>						
+						<isNotEmpty prepend="AND" property="searchTcode">
+							<![CDATA[ UPPER(A.TCODE) like  CONCAT('%', UPPER(  #searchTcode# ), '%')   ]]>
+						</isNotEmpty>
+						<isNotEmpty prepend="AND" property="searchPstinstCode">
+							<![CDATA[ A.PSTINST_CODE = #searchPstinstCode#   ]]>
+						</isNotEmpty>
+						<isNotEmpty prepend="AND" property="searchModuleCode">
+							<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+						</isNotEmpty>
+						<isNotEmpty prepend="AND" property="searchCustomerNm">
+							<![CDATA[ UPPER(C.USER_NM) like  CONCAT('%', UPPER( #searchCustomerNm# ), '%')   ]]>
+						</isNotEmpty>
+						<isNotEmpty prepend="AND" property="searchRid">
+							<![CDATA[ A.RID = #searchRid#   ]]>
+						</isNotEmpty>
+						
+						<isNotEmpty prepend="AND" property="searchSubject">
+							 <![CDATA[ ( UPPER(A.SUBJECT) like  CONCAT('%',UPPER(#searchSubject#),'%')  ]]>
+							OR A.SR_NO IN (SELECT DISTINCT SR_NO FROM SRCTS WHERE CTS_NUMBER like CONCAT('%',UPPER(#searchSubject#), '%') ) 
+							OR A.SR_NO LIKE CONCAT('%',UPPER(#searchSubject#),'%')
+							<isNotEmpty property="searchContentFlag">
+							OR A.COMMENT LIKE CONCAT('%',UPPER(#searchSubject#),'%')
+							OR E.COMMENT LIKE CONCAT('%',UPPER(#searchSubject#),'%')
+							</isNotEmpty>
+							 )
+						</isNotEmpty>
+						
+						<isNotEmpty property="searchStatus" prepend="AND">
+						<![CDATA[
+						 A.STATUS
+						]]>						
+						<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+						 #searchStatus[]#
+						</iterate>
+						</isNotEmpty>
+						<isEmpty property="searchStatus" prepend="AND">
+							A.STATUS = ''
+						</isEmpty>
+						<isNotEmpty prepend="AND" property="selectStatus">
+							<![CDATA[ A.STATUS = #selectStatus#   ]]>
+						</isNotEmpty>
+				  ORDER BY DATE_FORMAT( A.SIGN_DATE,'%Y-%m-%d') DESC, A.SR_NO DESC
+					 LIMIT #firstIndex#, #recordCountPerPage#
+				) T
+			 )
+<!-- 			<isEqual prepend="AND" property="searchSanctnerAt" compareValue="Y"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEqual prepend="AND" property="searchSanctnerAt" compareValue="N"> -->
+<!-- 				<![CDATA[ A.SANCTNER_AT = 'N'   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 			<isEmpty prepend="AND" property="searchStatusRetnrn"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 			</isEmpty> -->						
+		<![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+			<isNotEmpty prepend="AND" property="searchCustomerNm">
+				<![CDATA[ UPPER(CUSTOMER_NM) like  CONCAT('%', UPPER( #searchCustomerNm# ), '%')   ]]>
+			</isNotEmpty>			
+			
+		<![CDATA[		    
+				    ) TA
+			   ORDER BY RNUM
+		]]>		
+	</select>
+
+	<select id="SrManageDAO.selectCooperSrList" parameterClass="SrVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT  * 
+			  FROM  (
+			SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.SIGN_DATE DESC, ALL_LIST.SR_NO DESC) RNUM, ALL_LIST.* 
+			  FROM  (
+			/* 구현 Sql */
+			SELECT A.SR_NO
+				,  A.PSTINST_CODE
+				,  A.CUSTOMER_ID
+				,  A.SUBJECT
+				,  A.TEL1
+				,  A.TEL2
+				,  A.EMAIL
+				,  A.STATUS
+				,  A.MODULE_CODE
+				,  A.CATEGORY
+				,  A.PRIORITY
+				,  A.HOPE_DATE
+				,  A.SCHEDULE_DATE
+				,  A.COMPLETE_DATE
+				,  DATE_FORMAT( A.TEST_COMPLETE_DATE,'%Y-%m-%d') AS TEST_COMPLETE_DATE
+				,  A.EXPECT_TIME
+				,  A.REAL_EXPECT_TIME
+				,  A.RID
+				,  A.TCODE
+				,  A.TEST_AT
+				,  A.TEST_CONTENT
+				,  CASE A.TEST_AT WHEN 'Y' THEN 'Y' ELSE 'N' END AS TAT
+				,  A.POINT
+				,  A.POINT_CONTENT
+				,  A.COMMENT
+				,  A.RETURN_RESN
+				,  A.FILE_ID
+				,  DATE_FORMAT( A.SIGN_DATE,'%Y-%m-%d') AS SIGN_DATE
+				,  A.REPLY_DATE
+				,  A.EDIT_DATE
+				,  A.CONFIRM_DATE
+				,  A.SANCTNER_AT
+				,  B.NAME AS PSTINST_NM
+				,  D.USER_NM AS CUSTOMER_NM
+                ,  E.USER_NM AS RNAME
+                ,  E.USER_NM_EN AS RNAME_EN 
+                , A.ABAP_RID
+                , F.USER_NM AS ABAP_RNAME
+			  FROM  SRMANAGE A
+				INNER JOIN SRCOMPANY B ON B.PSTINST_CODE = A.PSTINST_CODE AND B.DEL_AT = 'N'
+				INNER JOIN ( SELECT PSTINST_CODE, MODULE_CODE 
+			 				   FROM SRCHARGER
+			 				  WHERE USER_ID = #userId# ) as C
+			 		    ON A.PSTINST_CODE = C.PSTINST_CODE
+					   AND A.MODULE_CODE = C.MODULE_CODE
+				LEFT OUTER JOIN LETTNEMPLYRINFO D ON D.EMPLYR_ID = A.CUSTOMER_ID
+				LEFT OUTER JOIN LETTNEMPLYRINFO E ON E.EMPLYR_ID = A.RID
+				LEFT OUTER JOIN LETTNEMPLYRINFO F ON F.EMPLYR_ID = A.ABAP_RID		   
+			 WHERE	1 = 1
+		]]>
+			<isNotEmpty prepend="AND" property="searchConfirmDateF">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') >= #searchConfirmDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchConfirmDateT">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') <= #searchConfirmDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchTcode">
+				<![CDATA[ UPPER(A.TCODE) like  CONCAT('%', UPPER( #searchTcode#), '%')   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchPstinstCode">
+				<![CDATA[ A.PSTINST_CODE = #searchPstinstCode#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchRid">
+				<![CDATA[ A.RID = #searchRid#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchSubject">
+				 <![CDATA[ ( UPPER(A.SUBJECT) like  CONCAT('%',UPPER(#searchSubject#),'%')  ]]>
+				OR A.SR_NO IN (SELECT DISTINCT SR_NO FROM SRCTS WHERE CTS_NUMBER like CONCAT('%',UPPER(#searchSubject#), '%') ) 
+				OR A.SR_NO LIKE CONCAT('%',UPPER(#searchSubject#),'%') )				
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+			 A.STATUS
+			]]>						
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 #searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+			<isEmpty property="searchStatus" prepend="AND">
+				A.STATUS = ''
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="selectStatus">
+				<![CDATA[ A.STATUS = #selectStatus#   ]]>
+			</isNotEmpty>
+			
+<!-- 			<isEqual prepend="AND" property="searchSanctnerAt" compareValue="Y"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEqual prepend="AND" property="searchSanctnerAt" compareValue="N"> -->
+<!-- 				<![CDATA[ A.SANCTNER_AT = 'N'   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 			<isEmpty prepend="AND" property="searchStatusRetnrn"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 			</isEmpty> -->
+						
+		<![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+			<isNotEmpty prepend="AND" property="searchCustomerNm">
+				<![CDATA[ UPPER(CUSTOMER_NM) like  CONCAT('%', UPPER( #hCustomerNm# ), '%')   ]]>
+			</isNotEmpty>			
+			
+		<![CDATA[		    
+				    ) TA
+			 WHERE  RNUM  > #firstIndex#
+			   AND  RNUM <= #firstIndex# + #recordCountPerPage#
+		]]>		
+	</select>
+
+
+
+	<select id="SrManageDAO.selectCooperSrListTotCnt" parameterClass="SrVO" resultClass="SrVO">
+
+		<![CDATA[
+			SELECT COUNT(*) totcnt, SUM(REAL_EXPECT_TIME) realExpectTimeSum
+			  FROM  (
+			/* 구현 Sql */
+			SELECT   D.USER_NM AS CUSTOMER_NM
+                ,  E.USER_NM AS RNAME
+                , A.REAL_EXPECT_TIME
+			  FROM  SRMANAGE A
+				INNER JOIN SRCOMPANY B ON B.PSTINST_CODE = A.PSTINST_CODE AND B.DEL_AT = 'N'
+				INNER JOIN ( SELECT PSTINST_CODE, MODULE_CODE 
+			 				   FROM SRCHARGER
+			 				  WHERE USER_ID = #userId# ) as C
+			 		    ON A.PSTINST_CODE = C.PSTINST_CODE
+					   AND A.MODULE_CODE = C.MODULE_CODE
+			    LEFT OUTER JOIN LETTNEMPLYRINFO D ON D.EMPLYR_ID = A.CUSTOMER_ID
+				LEFT OUTER JOIN LETTNEMPLYRINFO E ON E.EMPLYR_ID = A.RID
+			 WHERE	1 = 1
+		]]>			
+			<isNotEmpty prepend="AND" property="searchConfirmDateF">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') >= #searchConfirmDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchConfirmDateT">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') <= #searchConfirmDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchTcode">
+				<![CDATA[ UPPER(A.TCODE) like  CONCAT('%', UPPER( #searchTcode# ), '%')   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchPstinstCode">
+				<![CDATA[ A.PSTINST_CODE = #searchPstinstCode#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchRid">
+				<![CDATA[ A.RID = #searchRid#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchSubject">
+				 <![CDATA[ ( UPPER(A.SUBJECT) like  CONCAT('%',UPPER(#searchSubject#),'%')  ]]>
+				OR A.SR_NO IN (SELECT DISTINCT SR_NO FROM SRCTS WHERE CTS_NUMBER like CONCAT('%',UPPER(#searchSubject#), '%') ) 
+				OR A.SR_NO LIKE CONCAT('%',UPPER(#searchSubject#),'%') )				
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+			 A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 #searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+			<isEmpty property="searchStatus" prepend="AND">
+				A.STATUS = ''
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="selectStatus">
+				<![CDATA[ A.STATUS = #selectStatus#   ]]>
+			</isNotEmpty>
+
+<!-- 			<isEqual prepend="AND" property="searchSanctnerAt" compareValue="Y"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEqual prepend="AND" property="searchSanctnerAt" compareValue="N"> -->
+<!-- 				<![CDATA[ A.SANCTNER_AT = 'N'   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEmpty prepend="AND" property="searchStatusRetnrn"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 			</isEmpty> -->
+						
+		<![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+			<isNotEmpty prepend="AND" property="searchCustomerNm">
+				<![CDATA[ UPPER(CUSTOMER_NM) like  CONCAT('%', UPPER(  #searchCustomerNm# ), '%')   ]]>
+			</isNotEmpty>
+	</select>
+
+	<select id="SrManageDAO.selectSrListTotCnt" parameterClass="SrVO" resultClass="SrVO">
+
+		
+			SELECT 
+			COUNT(*) totcnt, SUM(REAL_EXPECT_TIME) realExpectTimeSum
+			  FROM  (
+			/* 구현 Sql */
+			SELECT <isNotEmpty property="searchSubject">
+				<isNotEmpty property="searchContentFlag">
+					DISTINCT
+				</isNotEmpty>
+			</isNotEmpty>
+			       A.SR_NO
+			    ,  C.USER_NM AS CUSTOMER_NM
+                ,  D.USER_NM AS RNAME
+                , A.REAL_EXPECT_TIME
+			  FROM  SRMANAGE A
+				INNER JOIN SRCOMPANY B ON B.PSTINST_CODE = A.PSTINST_CODE AND B.DEL_AT = 'N'
+				LEFT OUTER JOIN LETTNEMPLYRINFO C ON C.EMPLYR_ID = A.CUSTOMER_ID
+				LEFT OUTER JOIN LETTNEMPLYRINFO D ON D.EMPLYR_ID = A.RID
+				<isNotEmpty property="searchSubject">
+					<isNotEmpty property="searchContentFlag">
+						LEFT OUTER JOIN SRMANAGE_ANSWER E ON E.SR_NO = A.SR_NO
+					</isNotEmpty>
+				</isNotEmpty>
+			 WHERE	1 = 1
+				
+			<isNotEmpty prepend="AND" property="searchConfirmDateF">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') >= #searchConfirmDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchConfirmDateT">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') <= #searchConfirmDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchTcode">
+				<![CDATA[ UPPER(A.TCODE) like  CONCAT('%', UPPER( #searchTcode# ), '%')   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchPstinstCode">
+				<![CDATA[ A.PSTINST_CODE = #searchPstinstCode#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchRid">
+				<![CDATA[ A.RID = #searchRid#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchSubject">
+				 <![CDATA[ ( UPPER(A.SUBJECT) like  CONCAT('%',UPPER(#searchSubject#),'%')  ]]>
+				OR A.SR_NO IN (SELECT DISTINCT SR_NO FROM SRCTS WHERE CTS_NUMBER like CONCAT('%',UPPER(#searchSubject#), '%') ) 
+				OR A.SR_NO LIKE CONCAT('%',UPPER(#searchSubject#),'%')
+				<isNotEmpty property="searchContentFlag">
+				OR A.COMMENT LIKE CONCAT('%',UPPER(#searchSubject#),'%')
+				OR E.COMMENT LIKE CONCAT('%',UPPER(#searchSubject#),'%')
+				</isNotEmpty>
+				 )				
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+			 A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 #searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+			<isEmpty property="searchStatus" prepend="AND">
+				A.STATUS = ''
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="selectStatus">
+				<![CDATA[ A.STATUS = #selectStatus#   ]]>
+			</isNotEmpty>
+
+<!-- 			<isEqual prepend="AND" property="searchSanctnerAt" compareValue="Y"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEqual prepend="AND" property="searchSanctnerAt" compareValue="N"> -->
+<!-- 				<![CDATA[ A.SANCTNER_AT = 'N'   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEmpty prepend="AND" property="searchStatusRetnrn"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 			</isEmpty> -->
+						
+		<![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+			<isNotEmpty prepend="AND" property="searchCustomerNm">
+				<![CDATA[ UPPER(CUSTOMER_NM) like  CONCAT('%', UPPER(  #searchCustomerNm# ), '%')   ]]>
+			</isNotEmpty>
+	</select>
+
+	<!-- kpmg 2021.07.14 -->
+	<select id="SrManageDAO.selectSrDetail" parameterClass="SrVO" resultClass="SrVO">
+		<![CDATA[
+			SELECT    A.SR_NO            srNo          
+					, A.PSTINST_CODE     pstinstCode   
+					, A.CUSTOMER_ID      customerId    
+					, A.SUBJECT          subject       
+					, A.TEL1             tel1          
+					, A.TEL2             tel2          
+					, A.EMAIL            email         
+					, A.STATUS           status        
+					, A.MODULE_CODE      moduleCode    
+					, (SELECT E.CODE_NM
+	                     FROM LETTCCMMNDETAILCODE E 
+	                    WHERE E.CODE_ID = 'SR0003' 
+	                      AND E.CODE = A.MODULE_CODE
+	                      AND E.USE_AT = 'Y') AS moduleNm
+					, A.CATEGORY         category     
+					, (SELECT F.CODE_NM
+	                     FROM LETTCCMMNDETAILCODE F 
+	                    WHERE F.CODE_ID = 'SR0005' 
+	                      AND F.CODE = A.CATEGORY
+	                      AND F.USE_AT = 'Y') AS categoryNm 
+					, A.PRIORITY         priority      
+					, (SELECT G.CODE_NM
+	                     FROM LETTCCMMNDETAILCODE G
+	                    WHERE G.CODE_ID = 'SR0006' 
+	                      AND G.CODE = A.PRIORITY
+	                      AND G.USE_AT = 'Y') AS priorityNm
+					, DATE_FORMAT( A.HOPE_DATE,'%Y-%m-%d') hopeDate      
+					, DATE_FORMAT( A.SCHEDULE_DATE,'%Y-%m-%d') scheduleDate  
+					, DATE_FORMAT( A.COMPLETE_DATE,'%Y-%m-%d') completeDate  
+					, A.EXPECT_TIME      expectTime    
+					, A.REAL_EXPECT_TIME realExpectTime
+					, A.ABAP_REAL_EXPECT_TIME abapRealExpectTime					
+					, A.RID              rid     				
+					, A.ABAP_RID         abapRid         
+					, A.TCODE            tcode         
+					, A.TEST_AT          testAt       
+					, A.TEST_CONTENT     testContent   
+					, DATE_FORMAT( A.TEST_COMPLETE_DATE,'%Y-%m-%d') testCompleteDate  
+					, A.POINT            point         
+					, A.POINT_CONTENT    pointContent  
+					, A.COMMENT          comment       
+					, A.RETURN_RESN      returnResn
+					, A.SANCTNER_AT      sanctnerAt
+					, A.FILE_ID          fileId        
+					, DATE_FORMAT( A.SIGN_DATE,'%Y-%m-%d %H:%i:%S')    signDate      
+					, DATE_FORMAT( A.REPLY_DATE,'%Y-%m-%d')   replyDate     
+					, DATE_FORMAT( A.EDIT_DATE,'%Y-%m-%d')    editDate      
+					, DATE_FORMAT( A.CONFIRM_DATE,'%Y-%m-%d') confirmDate 
+					, B.NAME AS pstinstNm
+					, B.ENAME AS pstinstNmEn  
+					, (SELECT DISTINCT C.USER_NM
+	                      FROM LETTNEMPLYRINFO C 
+	                     WHERE C.EMPLYR_ID = A.CUSTOMER_ID) AS customerNm
+	                , (SELECT DISTINCT D.USER_NM
+	                      FROM LETTNEMPLYRINFO D 
+	                     WHERE D.EMPLYR_ID = A.RID) AS rname 
+	                , (SELECT DISTINCT E.USER_NM
+	                      FROM LETTNEMPLYRINFO E 
+	                     WHERE E.EMPLYR_ID = A.ABAP_RID) AS abapRname 
+	                , (SELECT DISTINCT D.EMAIL_ADRES
+	                      FROM LETTNEMPLYRINFO D 
+	                     WHERE D.EMPLYR_ID = A.RID) AS remail  
+	               , B.SETTLE_AT AS settleAt  
+	               , (SELECT DISTINCT C.USER_NM
+	                      FROM LETTNEMPLYRINFO C 
+	                     WHERE C.EMPLYR_ID = A.SANCTNER_ID) AS sanctnerNm	               
+			  FROM SRMANAGE A
+			  INNER JOIN SRCOMPANY B ON B.PSTINST_CODE = A.PSTINST_CODE AND B.DEL_AT = 'N'			     
+             WHERE SR_NO = #srNo#
+		]]>
+	</select>
+
+	<insert id="SrManageDAO.insertSr">
+	
+		<selectKey resultClass="String" keyProperty="pstinstAbrv">
+			SELECT  PSTINST_ABRV	pstinstAbrv
+			  FROM  SRCOMPANY
+			 WHERE  PSTINST_CODE = #pstinstCode#
+	    </selectKey>
+	    
+		<![CDATA[
+			INSERT 
+			  INTO  SRMANAGE
+			     (  SR_NO
+			      , PSTINST_CODE
+			      , CUSTOMER_ID
+			      , SUBJECT
+			      , TEL1
+			      , TEL2
+			      , EMAIL
+			      , STATUS
+			      , MODULE_CODE
+			      , CATEGORY
+			      , PRIORITY
+			      , HOPE_DATE
+			      , RID
+			      , TCODE
+			      , COMMENT
+			      , FILE_ID
+			      , SIGN_DATE
+		]]>	
+		<![CDATA[	      
+			     ) 
+			VALUES
+			     (    (SELECT  CONCAT(UPPER(#pstinstAbrv#), LPAD(IFNULL(MAX(SUBSTRING(SR.SR_NO,3,5))+1,1),5,'0') ) srNo
+			  			 FROM  SRMANAGE SR
+			 			WHERE  UPPER(SUBSTRING(SR.SR_NO,1,2)) = UPPER(#pstinstAbrv#))
+					, #pstinstCode#
+					, #customerId#
+					, #subject#
+					, #tel1#
+					, #tel2#
+					, #email#
+					, #status#
+					, #moduleCode#
+					, #category#
+					, #priority#
+					, #hopeDate#
+					, (SELECT USER_ID FROM SRCHARGER			  
+						WHERE PSTINST_CODE = #pstinstCode#
+						  AND MODULE_CODE  = #moduleCode#
+						  AND USER_ID IS NOT NULL
+						ORDER BY MAIN_AT DESC 
+						LIMIT 1)
+					, #tcode#
+					, #comment#
+					, #fileId#
+					, SYSDATE()
+		]]>	
+		<![CDATA[	
+			     ) 
+		]]>	
+	
+	</insert>
+
+	<update id="SrManageDAO.updateSrCstmr">
+		<![CDATA[
+            UPDATE  SRMANAGE 
+               SET SUBJECT      = #subject#  
+                ,  CUSTOMER_ID  = #customerId#    
+                ,  TEL1         = #tel1#    
+                ,  TEL2         = #tel2#    
+                ,  EMAIL        = #email#    
+                ,  STATUS       = #status#    
+                ,  MODULE_CODE  = #moduleCode#    
+                ,  CATEGORY     = #category#    
+                ,  PRIORITY     = #priority#    
+                ,  SIGN_DATE    = SYSDATE()
+                ,  HOPE_DATE    = #hopeDate#    
+                ,  RID          = (SELECT USER_ID FROM SRCHARGER			  
+									WHERE PSTINST_CODE = #pstinstCode#
+									  AND MODULE_CODE  = #moduleCode#
+									  AND USER_ID IS NOT NULL
+									ORDER BY MAIN_AT DESC
+									LIMIT 1)
+                ,  TCODE        = #tcode#    
+                ,  COMMENT      = #comment#    
+                ,  FILE_ID      = #fileId#    
+             WHERE SR_NO        = #srNo# 
+		]]>
+	</update>
+	
+	<!-- kpmg 2021.07.14 -->
+	<update id="SrManageDAO.updateSrSanctner">
+        UPDATE  SRMANAGE 
+           SET STATUS       = #status#
+           ,  SANCTNER_DATE = SYSDATE()
+           ,  SANCTNER_ID = #sanctnerId#
+           <isNotEmpty prepend=", " property="returnResn">
+            RETURN_RESN   = #returnResn#  
+           </isNotEmpty>
+           <isNotEmpty prepend=", " property="sanctnerAt">
+            SANCTNER_AT   = #sanctnerAt#  
+            ,	SIGN_DATE = SYSDATE()
+           </isNotEmpty>
+         WHERE SR_NO        = #srNo# 
+	</update>
+	
+	<update id="SrManageDAO.updateSr">
+            UPDATE  SRMANAGE 
+               SET  EDIT_DATE     = SYSDATE()
+              
+    	<isNotEmpty prepend=", " property="moduleCode">
+					MODULE_CODE   = #moduleCode#
+		</isNotEmpty>
+		<isNotEmpty prepend=", " property="category">
+					CATEGORY      = #category#
+		</isNotEmpty>
+		<isNotEmpty prepend=", " property="priority">
+					PRIORITY      = #priority#
+		</isNotEmpty>
+		<isNotEmpty prepend=", " property="scheduleDate">
+					SCHEDULE_DATE = #scheduleDate#
+		</isNotEmpty>
+		<isNotEmpty prepend=", " property="completeDate">
+					COMPLETE_DATE = #completeDate#
+		</isNotEmpty>
+		<isNotEmpty prepend=", " property="expectTime">
+					EXPECT_TIME   = #expectTime#
+		</isNotEmpty>
+		<isNotEmpty prepend=", " property="realExpectTime">
+					REAL_EXPECT_TIME   = #realExpectTime#
+		</isNotEmpty>
+		<isNotEmpty prepend=", " property="abapRealExpectTime">
+					ABAP_REAL_EXPECT_TIME   = #abapRealExpectTime#
+		</isNotEmpty>
+		
+		<isNotEmpty prepend=", " property="rid">
+					RID           = #rid#
+		</isNotEmpty>
+		<isNotEmpty prepend=", " property="abapRid">
+					ABAP_RID           = #abapRid#
+		</isNotEmpty>
+		<isNotEmpty prepend=", " property="tcode">
+					TCODE         = #tcode# 
+		</isNotEmpty> 
+		
+		<isEqual property="status" compareValue="1005">
+			<isEqual property="testAt" compareValue="Y">
+				<isEmpty prepend=", " property="completeDate">
+					COMPLETE_DATE  =  SYSDATE()
+				</isEmpty>			 
+	        </isEqual>
+		</isEqual>		
+		<isEqual property="status" compareValue="1005">
+			<isNotEmpty prepend=", " property="testAt">
+						TEST_AT         = #testAt# 
+					  , TEST_CONTENT  = #testContent#
+			</isNotEmpty> 
+			<isNotEmpty prepend=", " property="point">
+						POINT         = #point# 
+					  , POINT_CONTENT = #pointContent# 
+			</isNotEmpty>
+		</isEqual>
+		<isEqual property="status" compareValue="1006">
+			<isNotEmpty prepend=", " property="testAt">
+						TEST_AT         = #testAt# 
+					  , TEST_CONTENT  = #testContent#
+			</isNotEmpty> 
+			<isNotEmpty prepend=", " property="point">
+						POINT         = #point# 
+					  , POINT_CONTENT = #pointContent# 
+			</isNotEmpty>
+		</isEqual>
+		
+		<isEqual prepend=", " property="tempSaveAt" compareValue="N">
+                    REPLY_DATE  =  SYSDATE()
+        </isEqual>
+        
+        <isEqual property="tat" compareValue="Y">
+        	<isEmpty prepend=", " property="testCompleteDate">
+	                    TEST_COMPLETE_DATE  =  SYSDATE()
+	        </isEmpty>
+        </isEqual>
+        
+        <isEqual property="testAt" compareValue="Y">
+        	<isEmpty prepend=", " property="completeDate">
+	                    COMPLETE_DATE  =  SYSDATE()
+	        </isEmpty>
+        </isEqual>
+        
+        <isEqual property="status" compareValue="1003">
+			<isEmpty prepend=", " property="confirmDate">
+				CONFIRM_DATE = CASE WHEN STATUS = '1002' THEN SYSDATE() ELSE CONFIRM_DATE END
+			</isEmpty>
+		</isEqual>
+		<isEqual property="status" compareValue="1004">
+			<isEmpty prepend=", " property="confirmDate">
+				CONFIRM_DATE = CASE WHEN STATUS = '1002' THEN SYSDATE() ELSE CONFIRM_DATE END
+			</isEmpty>
+		</isEqual>
+		<isEqual property="status" compareValue="1005">
+			<isEmpty prepend=", " property="confirmDate">
+				CONFIRM_DATE = CASE WHEN STATUS = '1002' THEN SYSDATE() ELSE CONFIRM_DATE END
+			</isEmpty>
+		</isEqual>
+		<isEqual property="status" compareValue="1006">
+			<isEmpty prepend=", " property="confirmDate">
+				CONFIRM_DATE = CASE WHEN STATUS = '1002' THEN SYSDATE() ELSE CONFIRM_DATE END
+			</isEmpty>
+		</isEqual>
+		<isNotEmpty prepend=", " property="status">
+					STATUS        = #status# 
+		</isNotEmpty>
+		  
+             WHERE  SR_NO = #srNo# 
+	</update>
+	<insert id="SrManageDAO.insertDeletedSr">
+		  	INSERT INTO SRMANAGE_DEL
+  			SELECT  (SELECT IFNULL(MAX(SD.DEL_ID), 0) + 1 FROM SRMANAGE_DEL SD) AS DEL_ID 
+					,SR_NO
+					,PSTINST_CODE
+					,CUSTOMER_ID
+					,SUBJECT
+					,TEL1
+					,TEL2
+					,EMAIL
+					,STATUS
+					,MODULE_CODE
+					,CATEGORY
+					,PRIORITY
+					,HOPE_DATE
+					,SCHEDULE_DATE
+					,COMPLETE_DATE
+					,EXPECT_TIME
+					,REAL_EXPECT_TIME
+					,RID
+					,TCODE
+					,TEST_AT
+					,TEST_CONTENT
+					,POINT
+					,POINT_CONTENT
+					,COMMENT
+					,FILE_ID
+					,RETURN_RESN
+					,SIGN_DATE
+					,REPLY_DATE
+					,EDIT_DATE
+					,CONFIRM_DATE
+					,TEST_COMPLETE_DATE
+					,ABAP_REAL_EXPECT_TIME
+					,ABAP_RID
+					,SANCTNER_AT
+					,SANCTNER_DATE
+					,SANCTNER_ID
+			 FROM SRMANAGE
+  			WHERE SR_NO = #srNo#;
+	</insert>
+	<delete id="SrManageDAO.deleteSr">
+  			
+            DELETE  
+              FROM  SRMANAGE     
+             WHERE  SR_NO = #srNo# 
+
+
+	</delete>
+	
+	<insert id="SrManageDAO.insertDeletedSrAnswerAll">			
+  			INSERT INTO SRMANAGE_ANSWER_DEL
+			SELECT  (SELECT IFNULL(MAX(SAD.DEL_ID), 0) + 1 FROM SRMANAGE_ANSWER_DEL SAD) AS DEL_ID 
+					,ANSWER_NO
+					,SR_NO
+					,ID
+					,REAL_EXPECT_TIME
+					,CATEGORY
+					,MODULE_CODE
+					,COMMENT
+					,CSTMR_COMMENT
+					,FILE_ID
+					,SIGN_DATE
+					,TEMP_SAVE_AT
+					,CREATE_DATE
+					,EDIT_DATE
+					,CREATOR_ID
+					,EDITOR_ID
+					,SEQ
+					,ANSWER_SE
+			 FROM SRMANAGE_ANSWER
+  			WHERE SR_NO = #srNo#;
+	</insert>
+	
+	<delete id="SrManageDAO.deleteSrAnswerAll">			
+  			
+            DELETE  
+              FROM  SRMANAGE_ANSWER     
+             WHERE  SR_NO = #srNo# 
+	</delete>	
+	
+	<insert id="SrManageDAO.insertDeletedSrAnswer">
+		INSERT INTO SRMANAGE_ANSWER_DEL
+			SELECT  (SELECT IFNULL(MAX(SAD.DEL_ID), 0) + 1 FROM SRMANAGE_ANSWER_DEL SAD) AS DEL_ID 
+					,ANSWER_NO
+					,SR_NO
+					,ID
+					,REAL_EXPECT_TIME
+					,CATEGORY
+					,MODULE_CODE
+					,COMMENT
+					,CSTMR_COMMENT
+					,FILE_ID
+					,SIGN_DATE
+					,TEMP_SAVE_AT
+					,CREATE_DATE
+					,EDIT_DATE
+					,CREATOR_ID
+					,EDITOR_ID
+					,SEQ
+					,ANSWER_SE
+			 FROM SRMANAGE_ANSWER
+  			WHERE ANSWER_NO = #answerNoDelete#
+	</insert>
+	<delete id="SrManageDAO.deleteSrAnswer">
+            DELETE  
+              FROM  SRMANAGE_ANSWER     
+             WHERE  ANSWER_NO        = #answerNoDelete# 
+	</delete>	
+	
+	
+	
+	<select id="SrManageDAO.selectSrAnswerList" parameterClass="SrAnswerVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT    A.ANSWER_NO        answerNo      
+					, A.SR_NO            srNo          
+					, A.ID               rid            
+					, A.REAL_EXPECT_TIME realExpectTime
+					, A.CATEGORY         category      
+					, A.MODULE_CODE      moduleCode    
+					, A.COMMENT          comment       
+					, A.CSTMR_COMMENT    cstmrComment  
+					, A.FILE_ID          fileId 
+					, A.TEMP_SAVE_AT     tempSaveAt
+					, A.ANSWER_SE	     answerSe
+					, IFNULL(A.EDIT_DATE, A.CREATE_DATE)	     signDate
+					, (SELECT DISTINCT B.USER_NM
+	                     FROM LETTNEMPLYRINFO B
+	                    WHERE B.EMPLYR_ID = A.ID) AS rname 
+	                , (SELECT COUNT(*)
+	                     FROM SRMANAGE_ANSWER C
+	                    WHERE C.SR_NO = #srNo#
+	                      AND C.TEMP_SAVE_AT = 'N'
+	                      AND IFNULL(C.EDIT_DATE, C.CREATE_DATE) > IFNULL(A.EDIT_DATE, A.CREATE_DATE)) AS afterCnt
+			  FROM SRMANAGE_ANSWER A			     
+             WHERE A.SR_NO = #srNo#
+               AND A.TEMP_SAVE_AT = 'N'
+               AND A.ANSWER_NO IN (SELECT ANSWER_NO FROM SRMANAGE_ANSWER WHERE SR_NO = #srNo# AND TEMP_SAVE_AT = 'N') 
+          ORDER BY IFNULL(A.EDIT_DATE, A.CREATE_DATE)
+		]]>
+	</select>
+	
+	<select id="SrManageDAO.selectSrAnswerListTemp" parameterClass="SrAnswerVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT    A.ANSWER_NO        answerNo      
+					, A.SR_NO            srNo          
+					, A.ID               ansRid
+					, A.REAL_EXPECT_TIME ansRealExpectTime
+					, A.CATEGORY         ansCategory
+					, A.MODULE_CODE      ansModuleCode
+					, A.COMMENT          ansComment
+					, A.CSTMR_COMMENT    ansCstmrComment
+					, A.FILE_ID          ansFileId
+					, A.TEMP_SAVE_AT     ansTempSaveAt
+					, A.ANSWER_SE	     answerSe
+					, A.SIGN_DATE	     ansSignDate
+					, (SELECT DISTINCT B.USER_NM
+	                     FROM LETTNEMPLYRINFO B
+	                    WHERE B.EMPLYR_ID = A.ID) AS ansRname 
+			  FROM SRMANAGE_ANSWER A			     
+             WHERE A.SR_NO = #srNo#
+               AND A.TEMP_SAVE_AT = 'Y'
+               AND A.ANSWER_SE = #answerSe#
+               AND A.ANSWER_NO = (SELECT ANSWER_NO FROM SRMANAGE_ANSWER WHERE SR_NO = #srNo# AND TEMP_SAVE_AT = 'Y' AND ANSWER_SE = #answerSe#) 
+          ORDER BY A.ANSWER_NO
+		]]>
+	</select>
+	
+	<update id="SrManageDAO.updateSrAnswer">
+            UPDATE  SRMANAGE_ANSWER 
+               SET  REAL_EXPECT_TIME = #ansRealExpectTime#
+                  , ID               = #ansRid#
+                  , CATEGORY         = #ansCategory#
+                  , MODULE_CODE      = #ansModuleCode#
+                  , COMMENT          = #ansComment#
+                  , CSTMR_COMMENT    = #ansCstmrComment#
+                  , FILE_ID          = #ansFileId#
+                  , TEMP_SAVE_AT     = #tempSaveAt#
+                  , EDIT_DATE        = SYSDATE()
+				  , EDITOR_ID        = #ansEditorId#
+             WHERE  ANSWER_NO = #answerNo# 
+	</update>
+	
+	<update id="SrManageDAO.updateSrAnswerCstmrComment">
+            UPDATE  SRMANAGE_ANSWER 
+               SET  CSTMR_COMMENT    = #ansCstmrCommentUpdate#
+             WHERE  ANSWER_NO        = #answerNoUpdate# 
+	</update>
+	
+	<insert id="SrManageDAO.insertSrAnswer">
+	
+		<![CDATA[
+			INSERT 
+			  INTO  SRMANAGE_ANSWER
+			     ( ANSWER_NO 
+			      ,	SR_NO
+			      , ID
+			      , REAL_EXPECT_TIME
+			      , CATEGORY
+			      , MODULE_CODE
+			      , COMMENT
+			      , CSTMR_COMMENT
+			      , FILE_ID
+			      , SIGN_DATE
+			      , TEMP_SAVE_AT
+			      , ANSWER_SE
+			      , CREATE_DATE
+			      , CREATOR_ID
+			     ) 
+			VALUES
+			     (  (SELECT IFNULL(MAX(SA.ANSWER_NO), 0) + 1 AS ANSWER_NO  FROM SRMANAGE_ANSWER SA)
+			     	, #srNo#
+					, #ansRid#
+					, #ansRealExpectTime#
+					, #ansCategory#
+					, #ansModuleCode#
+					, #ansComment#
+					, #ansCstmrComment#
+					, #ansFileId#
+					, SYSDATE()
+					, #tempSaveAt#
+					, #answerSe#
+					, SYSDATE()
+					, #ansCreatorId#
+			     ) 
+		]]>	
+
+	</insert>
+	
+	<insert id="SrManageDAO.insertSrMailHisto">
+	
+		<![CDATA[
+			INSERT 
+			  INTO  SR_MAIL_HISTO
+			     (  
+			     	MAIL_NO
+			       ,SENDER_EMPLYR_NM
+			       ,SENDER_EMAIL
+			       ,RECEIVER_EMAIL
+			       ,SUBJECT
+			       ,COMMENT
+			       ,FILE_ID
+			       ,SR_NO
+			       ,ANSWER_NO
+			       ,SEND_AT
+			       ,CREATE_DATE
+			     ) 
+			VALUES
+			     (  (SELECT IFNULL(MAX(HS.MAIL_NO), 0) + 1 AS MAIL_NO  FROM SR_MAIL_HISTO HS)
+			     	, #mailSenderEmplyrNm#
+					, #mailSenderEmail#
+					, #mailReceiverEmail#
+					, #mailSubject#
+					, #mailComment#
+					, #mailFileId#
+					, #mailSrNo#
+					, #mailAnswerNo#
+					, 'N'
+					, SYSDATE()
+			     ) 
+		]]>	
+
+	</insert>	
+	
+	<select id="SrManageDAO.selectAnsTempSaveAt" parameterClass="SrVO" resultClass="String">
+		<![CDATA[
+			SELECT SR_NO AS ansTempSaveAt
+			  FROM SRMANAGE_ANSWER			     
+             WHERE SR_NO = #srNo#
+               AND TEMP_SAVE_AT = 'Y'
+               AND ANSWER_SE = #answerSe#
+		]]>
+	</select>
+	
+	<select id="SrManageDAO.selectPstinstSettleAt" parameterClass="SrVO" resultClass="String">
+		<![CDATA[
+			SELECT SETTLE_AT     settleAt
+			  FROM SRCOMPANY			     
+             WHERE PSTINST_CODE = #pstinstCode#
+		]]>
+	</select>
+	
+	<select id="SrManageDAO.selectFileId" parameterClass="SrVO" resultClass="String">
+		<![CDATA[
+			SELECT FILE_ID     fileId
+			  FROM SRMANAGE_ANSWER			     
+             WHERE ANSWER_NO        = #answerNoDelete# 
+		]]>
+	</select>
+	
+	<select id="SrManageDAO.selectSrCntDetail" parameterClass="SrVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT STATUS, COUNT(*) cnt
+			  FROM  (
+			/* 구현 Sql */
+			SELECT A.STATUS, (SELECT DISTINCT C.USER_NM
+                      FROM LETTNEMPLYRINFO C 
+                     WHERE C.EMPLYR_ID = A.CUSTOMER_ID) AS CUSTOMER_NM
+                , (SELECT DISTINCT D.USER_NM
+                      FROM LETTNEMPLYRINFO D 
+                     WHERE D.EMPLYR_ID = A.RID) AS RNAME 
+			  FROM  SRMANAGE A
+				INNER JOIN SRCOMPANY B ON B.PSTINST_CODE = A.PSTINST_CODE AND B.DEL_AT = 'N'
+			 WHERE	1 = 1
+		]]>			
+			<isNotEmpty prepend="AND" property="searchConfirmDateF">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') >= #searchConfirmDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchConfirmDateT">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') <= #searchConfirmDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchTcode">
+				<![CDATA[ UPPER(A.TCODE) like  CONCAT('%', UPPER( #searchTcode# ), '%')   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchPstinstCode">
+				<![CDATA[ A.PSTINST_CODE = #searchPstinstCode#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchRid">
+				<![CDATA[ A.RID = #searchRid#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchSubject">
+				<![CDATA[ ( UPPER(A.SUBJECT) like  CONCAT('%',UPPER(#searchSubject#),'%')  ]]>
+				OR A.SR_NO IN (SELECT DISTINCT SR_NO FROM SRCTS WHERE CTS_NUMBER like CONCAT('%',UPPER(#searchSubject#), '%') ) 
+				OR A.SR_NO LIKE CONCAT('%',UPPER(#searchSubject#),'%') )
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+				<![CDATA[
+				 A.STATUS
+				]]>
+				<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+				 #searchStatus[]#
+				</iterate>
+			</isNotEmpty>
+			<isEmpty property="searchStatus" prepend="AND">
+				A.STATUS = ''
+			</isEmpty>
+			<isEmpty property="searchStatus" prepend="AND">
+				A.STATUS = ''
+			</isEmpty> 
+			
+<!-- 			<isEqual prepend="AND" property="searchSanctnerAt" compareValue="Y"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEqual prepend="AND" property="searchSanctnerAt" compareValue="N"> -->
+<!-- 				<![CDATA[ A.SANCTNER_AT = 'N'   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEmpty prepend="AND" property="searchStatusRetnrn"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 			</isEmpty> -->
+			
+		<![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+			<isNotEmpty prepend="AND" property="searchCustomerNm">
+				<![CDATA[ UPPER(CUSTOMER_NM) like  CONCAT('%', UPPER( #searchCustomerNm# ), '%')   ]]>
+			</isNotEmpty>
+			GROUP BY STATUS
+	</select>
+	
+	<select id="SrManageDAO.selectCooperSrCntDetail" parameterClass="SrVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT STATUS, COUNT(*) cnt
+			  FROM  (
+			/* 구현 Sql */
+			SELECT A.STATUS, (SELECT DISTINCT C.USER_NM
+                      FROM LETTNEMPLYRINFO C 
+                     WHERE C.EMPLYR_ID = A.CUSTOMER_ID) AS CUSTOMER_NM
+                , (SELECT DISTINCT D.USER_NM
+                      FROM LETTNEMPLYRINFO D 
+                     WHERE D.EMPLYR_ID = A.RID) AS RNAME 
+			  FROM  SRMANAGE A
+				INNER JOIN SRCOMPANY B ON B.PSTINST_CODE = A.PSTINST_CODE AND B.DEL_AT = 'N'
+				INNER JOIN ( SELECT PSTINST_CODE, MODULE_CODE 
+			 				   FROM SRCHARGER
+			 				  WHERE USER_ID = #userId# ) as C
+			 		    ON A.PSTINST_CODE = C.PSTINST_CODE
+					   AND A.MODULE_CODE = C.MODULE_CODE
+			 WHERE	1 = 1
+		]]>			
+			<isNotEmpty prepend="AND" property="searchConfirmDateF">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') >= #searchConfirmDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchConfirmDateT">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') <= #searchConfirmDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchTcode">
+				<![CDATA[ UPPER(A.TCODE) like  CONCAT('%', UPPER( #searchTcode# ), '%')   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchPstinstCode">
+				<![CDATA[ A.PSTINST_CODE = #searchPstinstCode#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchRid">
+				<![CDATA[ A.RID = #searchRid#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchSubject">
+				<![CDATA[ UPPER(A.SUBJECT) like  CONCAT('%', UPPER( #searchSubject# ), '%')   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+				<![CDATA[
+				 A.STATUS
+				]]>
+				<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+				 #searchStatus[]#
+				</iterate>
+			</isNotEmpty>
+			<isEmpty property="searchStatus" prepend="AND">
+				A.STATUS = ''
+			</isEmpty>
+			
+<!-- 			<isEqual prepend="AND" property="searchSanctnerAt" compareValue="Y"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEqual prepend="AND" property="searchSanctnerAt" compareValue="N"> -->
+<!-- 				<![CDATA[ A.SANCTNER_AT = 'N'   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEmpty prepend="AND" property="searchStatusRetnrn"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 			</isEmpty> -->
+			
+		<![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+			<isNotEmpty prepend="AND" property="searchCustomerNm">
+				<![CDATA[ UPPER(CUSTOMER_NM) like  CONCAT('%', UPPER(  #searchCustomerNm# ), '%')   ]]>
+			</isNotEmpty>
+			GROUP BY STATUS
+	</select>
+	<select id="SrManageDAO.excelDownSrReportList" parameterClass="SrVO" resultMap="srReport" fetchSize = "10000">
+		<![CDATA[
+			SELECT  * 
+			  FROM  (
+			SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.SIGN_DATE DESC, ALL_LIST.SR_NO ASC) RNUM, ALL_LIST.* 
+			  FROM  (
+			  /* 구현 Sql */
+			  SELECT L.*
+			  		,REGEXP_REPLACE(IFNULL(SC.COMMENT,'') , '<[^>]*>','') AS COMMENT
+			  		,REGEXP_REPLACE(IFNULL(SA.COMMENT,'') , '<[^>]*>','') AS ANS_COMMENT
+			  FROM (			
+				SELECT A.SR_NO
+					,  A.SUBJECT
+					,  MD.CODE_NM AS MODULE_NM
+					,  CT.CODE_NM AS CATEGORY_NM
+					,  A.STATUS
+					,  ST.CODE_NM AS STATUS_NM
+					,  CN.USER_NM AS CUSTOMER_NM
+					,  DATE_FORMAT( A.SIGN_DATE, '%Y-%m-%d') AS SIGN_DATE
+					,  DATE_FORMAT( A.SCHEDULE_DATE,'%Y-%m-%d') AS SCHEDULE_DATE
+					,  RN.USER_NM AS RNAME 
+	                ,  DATE_FORMAT( A.COMPLETE_DATE,'%Y-%m-%d') AS COMPLETE_DATE
+	                ,  DATE_FORMAT( A.TEST_COMPLETE_DATE,'%Y-%m-%d') AS TEST_COMPLETE_DATE                
+	                ,  A.REAL_EXPECT_TIME
+	                ,  A.ABAP_REAL_EXPECT_TIME 
+	                ,  B.NAME AS PSTINST_NM
+	                ,  A.TCODE
+	                ,  A.POINT                
+	                ,  MD.CODE_NM_EN AS MODULE_NM_EN
+	                ,  MD.CODE_NM_CN AS MODULE_NM_CN
+					,  CT.CODE_NM_EN AS CATEGORY_NM_EN
+					,  CT.CODE_NM_CN AS CATEGORY_NM_CN
+					,  ST.CODE_NM_EN AS STATUS_NM_EN                       
+					,  ST.CODE_NM_CN AS STATUS_NM_CN                       
+	                ,  RN.USER_NM_EN AS RNAME_EN
+	                ,  B.ENAME AS PSTINST_NM_EN
+	                ,  H.ANSWER_NO
+	             	FROM  SRMANAGE A
+					INNER JOIN SRCOMPANY B ON B.PSTINST_CODE = A.PSTINST_CODE AND B.DEL_AT = 'N'
+				    LEFT OUTER JOIN LETTCCMMNDETAILCODE MD
+				    ON  MD.CODE_ID = 'SR0003' AND MD.CODE = A.MODULE_CODE
+				    LEFT OUTER JOIN LETTCCMMNDETAILCODE ST
+				    ON  ST.CODE_ID = 'SR0004' AND ST.CODE = A.STATUS
+				    LEFT OUTER JOIN LETTCCMMNDETAILCODE CT
+				    ON  CT.CODE_ID = 'SR0005' AND CT.CODE = A.CATEGORY
+				    LEFT OUTER JOIN LETTNEMPLYRINFO CN
+				    ON CN.EMPLYR_ID = A.CUSTOMER_ID
+				    LEFT OUTER JOIN LETTNEMPLYRINFO RN
+				    ON RN.EMPLYR_ID = A.RID
+				    LEFT OUTER JOIN (SELECT SR_NO, MIN(ANSWER_NO) AS ANSWER_NO
+				    					FROM SRMANAGE_ANSWER
+				    					WHERE TEMP_SAVE_AT = 'N'	
+			 						  GROUP BY SR_NO ) H ON H.SR_NO = A.SR_NO
+				 WHERE	1 = 1
+		]]>						
+			<isNotEmpty prepend="AND" property="searchConfirmDateF">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') >= #searchConfirmDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchConfirmDateT">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') <= #searchConfirmDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchTcode">
+				<![CDATA[ UPPER(A.TCODE) like  CONCAT('%', UPPER(  #searchTcode# ), '%')   ]]>
+			</isNotEmpty>
+			<isNotEmpty property="pstinstCodeArr" prepend="AND">
+				<![CDATA[
+				 A.PSTINST_CODE
+				]]>
+				<iterate prepend="IN" property="pstinstCodeArr" open="(" close=")" conjunction=",">
+				 #pstinstCodeArr[]#
+				</iterate>
+			</isNotEmpty>
+	   		<isEmpty property="pstinstCodeArr">
+	   			<isNotEmpty prepend="AND" property="searchPstinstCode">
+					<![CDATA[ A.PSTINST_CODE = #searchPstinstCode#   ]]>
+				</isNotEmpty>
+	   		</isEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchRid">
+				<![CDATA[ A.RID = #searchRid#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchSubject">
+				<![CDATA[ ( UPPER(A.SUBJECT) like  CONCAT('%',UPPER(#searchSubject#),'%')  ]]>
+				OR A.SR_NO IN (SELECT DISTINCT SR_NO FROM SRCTS WHERE CTS_NUMBER like CONCAT('%',UPPER(#searchSubject#), '%') ) 
+				OR A.SR_NO LIKE CONCAT('%',UPPER(#searchSubject#),'%') )
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+			 A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 #searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+			<isEmpty property="searchStatus" prepend="AND">
+				A.STATUS = ''
+			</isEmpty>
+			
+			<isNotEmpty prepend="AND" property="selectStatus">
+				<![CDATA[ A.STATUS = #selectStatus#   ]]>
+			</isNotEmpty>
+			
+<!-- 			<isEqual prepend="AND" property="searchSanctnerAt" compareValue="Y"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEqual prepend="AND" property="searchSanctnerAt" compareValue="N"> -->
+<!-- 				<![CDATA[ A.SANCTNER_AT = 'N'   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEmpty prepend="AND" property="searchStatusRetnrn"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 			</isEmpty> -->
+	        			
+		<![CDATA[
+			) L
+		   LEFT OUTER JOIN SRMANAGE_ANSWER SA
+		   ON L.ANSWER_NO = SA.ANSWER_NO 
+		   AND L.SR_NO = SA.SR_NO
+		   LEFT OUTER JOIN SRMANAGE SC
+		   ON L.SR_NO = SC.SR_NO
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+			<isNotEmpty prepend="AND" property="searchCustomerNm">
+				<![CDATA[ UPPER(CUSTOMER_NM) like  CONCAT('%', UPPER(  #searchCustomerNm# ), '%')   ]]>
+			</isNotEmpty>			
+			
+		<![CDATA[		    
+				    ) TA		    
+		    ORDER BY CASE TA.STATUS WHEN '1006' THEN 1
+		    						WHEN '1005' THEN 2
+		    						ELSE 9 END
+		  	LIMIT #firstIndex#, 500	
+	    ]]>	
+	</select>
+	
+	<select id="SrManageDAO.excelDownSrDetailList" parameterClass="SrVO" resultMap="srDetail">
+		<![CDATA[
+			SELECT  * 
+			  FROM  (
+			SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.SIGN_DATE DESC, ALL_LIST.SR_NO ASC) RNUM, ALL_LIST.* 
+			  FROM  (
+			/* 구현 Sql */
+			SELECT A.SR_NO
+				,  A.SUBJECT
+				,  MD.CODE_NM AS MODULE_NM
+				,  CT.CODE_NM AS CATEGORY_NM
+				,  ST.CODE_NM AS STATUS_NM
+				,  CN.USER_NM AS CUSTOMER_NM
+				,  DATE_FORMAT( A.SIGN_DATE,'%Y-%m-%d') AS SIGN_DATE
+				,  DATE_FORMAT( A.SCHEDULE_DATE,'%Y-%m-%d') AS SCHEDULE_DATE
+				,  RN.USER_NM AS RNAME 
+                ,  DATE_FORMAT( A.COMPLETE_DATE,'%Y-%m-%d') AS COMPLETE_DATE          
+                ,  DATE_FORMAT( A.TEST_COMPLETE_DATE,'%Y-%m-%d') AS TEST_COMPLETE_DATE      
+                ,  IFNULL(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(A.COMMENT, 'align=right', '') , 'HEIGHT:', '') , 'WIDTH:', '') , '돋움', '') , 'style=', '') , 'BORDER-BOTTOM:', '') , 'BACKGROUND-COLOR:', '') , 'ece9d8', '') , 'transparent;', '') , 'BORDER-TOP:', '') , 'BORDER-RIGHT:', '') , 'BORDER-LEFT:', '') ,'') as COMMENT
+                ,  IFNULL(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(H.COMMENT, 'align=right', '') , 'HEIGHT:', '') , 'WIDTH:', '') , '돋움', '') , 'style=', '') , 'BORDER-BOTTOM:', '') , 'BACKGROUND-COLOR:', '') , 'ece9d8', '') , 'transparent;', '') , 'BORDER-TOP:', '') , 'BORDER-RIGHT:', '') , 'BORDER-LEFT:', '') ,'') AS ANS_COMMENT               
+                ,  H.REAL_EXPECT_TIME AS ANS_REAL_EXPECT_TIME
+                ,  AMD.CODE_NM AS ANS_MODULE_NM
+                ,  B.NAME AS PSTINST_NM
+			  FROM  SRMANAGE A
+				INNER JOIN SRCOMPANY B ON B.PSTINST_CODE = A.PSTINST_CODE AND B.DEL_AT = 'N'
+				LEFT OUTER JOIN SRMANAGE_ANSWER H ON H.SR_NO = A.SR_NO
+				LEFT OUTER JOIN LETTCCMMNDETAILCODE MD
+			    ON  MD.CODE_ID = 'SR0003' AND MD.CODE = A.MODULE_CODE
+			    LEFT OUTER JOIN LETTCCMMNDETAILCODE AMD
+			    ON  AMD.CODE_ID = 'SR0003' AND AMD.CODE = H.MODULE_CODE
+			    LEFT OUTER JOIN LETTCCMMNDETAILCODE ST
+			    ON  ST.CODE_ID = 'SR0004' AND ST.CODE = A.STATUS
+			    LEFT OUTER JOIN LETTCCMMNDETAILCODE CT
+			    ON  CT.CODE_ID = 'SR0005' AND CT.CODE = A.CATEGORY
+			    LEFT OUTER JOIN LETTNEMPLYRINFO CN
+			    ON CN.EMPLYR_ID = A.CUSTOMER_ID
+			    LEFT OUTER JOIN LETTNEMPLYRINFO RN
+			    ON RN.EMPLYR_ID = A.CUSTOMER_ID
+			 WHERE	1 = 1
+		]]>
+			<isNotEmpty prepend="AND" property="searchConfirmDateF">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') >= #searchConfirmDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchConfirmDateT">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') <= #searchConfirmDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchTcode">
+				<![CDATA[ UPPER(A.TCODE) like  CONCAT('%', UPPER( #searchTcode# ), '%')   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchPstinstCode">
+				<![CDATA[ A.PSTINST_CODE = #searchPstinstCode#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchRid">
+				<![CDATA[ A.RID = #searchRid#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchSubject">
+				<![CDATA[ ( UPPER(A.SUBJECT) like  CONCAT('%',UPPER(#searchSubject#),'%')  ]]>
+				OR A.SR_NO IN (SELECT DISTINCT SR_NO FROM SRCTS WHERE CTS_NUMBER like CONCAT('%',UPPER(#searchSubject#), '%') ) 
+				OR A.SR_NO LIKE CONCAT('%',UPPER(#searchSubject#),'%') )
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+			 A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 #searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+			<isEmpty property="searchStatus" prepend="AND">
+				A.STATUS = ''
+			</isEmpty>
+			
+			<isNotEmpty prepend="AND" property="selectStatus">
+				<![CDATA[ A.STATUS = #selectStatus#   ]]>
+			</isNotEmpty>
+			
+<!-- 			<isEqual prepend="AND" property="searchSanctnerAt" compareValue="Y"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEqual prepend="AND" property="searchSanctnerAt" compareValue="N"> -->
+<!-- 				<![CDATA[ A.SANCTNER_AT = 'N'   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEmpty prepend="AND" property="searchStatusRetnrn"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 			</isEmpty> -->
+	        			
+		<![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+			<isNotEmpty prepend="AND" property="searchCustomerNm">
+				<![CDATA[ UPPER(CUSTOMER_NM) like  CONCAT('%', UPPER(  #searchCustomerNm# ), '%')   ]]>
+			</isNotEmpty>
+			
+		<![CDATA[		    
+				    ) TA
+		]]>		
+	</select>
+	
+	<select id="SrManageDAO.selectChargerMailList" parameterClass="SrVO" resultMap="srEmail">
+    	SELECT DISTINCT B.EMAIL_ADRES, B.LANGUAGE_CODE
+    	  FROM SRCHARGER A
+    		INNER JOIN LETTNEMPLYRINFO B ON A.USER_ID = B.EMPLYR_ID
+        WHERE A.PSTINST_CODE = #pstinstCode#
+          AND A.MODULE_CODE  = #moduleCode#
+          AND A.USER_ID IS NOT NULL 
+          AND B.DEL_AT = 'N' 
+    </select>
+    
+    <select id="SrManageDAO.selectSanctnerEmailList" parameterClass="SrVO" resultMap="srEmail">
+    	SELECT DISTINCT A.EMAIL_ADRES, A.LANGUAGE_CODE
+	      FROM LETTNEMPLYRINFO A
+			LEFT OUTER JOIN LETTNEMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID	
+         WHERE A.PSTINST_CODE = #pstinstCode#
+           AND A.DEL_AT = 'N'
+           AND B.AUTHOR_CODE = 'ROLE_USER_SANCTNER'
+    </select>
+    
+    <select id="SrManageDAO.selectMemberEmailList" parameterClass="SrVO" resultMap="srEmail">
+		SELECT  A.EMAIL AS EMAIL_ADRES, B.LANGUAGE_CODE
+		  FROM SRMANAGE A
+    		INNER JOIN LETTNEMPLYRINFO B ON A.CUSTOMER_ID = B.EMPLYR_ID
+         WHERE SR_NO = #srNo#
+    </select>
+    
+    <select id="SrManageDAO.selectMngrEmail" parameterClass="SrVO" resultClass="SrVO">
+		<![CDATA[
+    	SELECT A.EMAIL_ADRES AS EMAIL
+    	  FROM LETTNEMPLYRINFO A 
+		  LEFT OUTER JOIN LETTNEMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID	
+		 WHERE B.AUTHOR_CODE IN ('ROLE_MNGR')
+		   AND A.DEL_AT = 'N'
+		   AND A.EMAIL_YN = 'Y'
+		]]>
+	</select>   
+	
+	<select id="SrManageDAO.selectEmptyMngrEmail" parameterClass="SrVO" resultClass="SrVO">
+		<![CDATA[
+    	SELECT A.EMAIL_ADRES AS EMAIL
+    	  FROM LETTNEMPLYRINFO A 
+		  LEFT OUTER JOIN LETTNEMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID	
+		 WHERE B.AUTHOR_CODE IN ('ROLE_MNGR')
+		   AND A.DEL_AT = 'N'
+		   LIMIT 1 
+		]]>
+	</select>  
+	
+	<select id="SrManageDAO.selectChargerEmail" parameterClass="SrVO" resultClass="SrVO">
+		<![CDATA[
+    	SELECT EMAIL_ADRES AS REMAIL, USER_NM AS RNAME
+    	  FROM LETTNEMPLYRINFO 
+		 WHERE EMPLYR_ID = #rid#
+		   AND DEL_AT   = 'N'
+		   LIMIT 1
+		]]>
+	</select>
+	
+	<select id="SrManageDAO.selectAnsChargerEmail" parameterClass="SrVO" resultClass="SrVO">
+		<![CDATA[
+    	SELECT EMAIL_ADRES AS REMAIL, USER_NM AS RNAME, USER_NM_EN AS rnameEn
+    	  FROM LETTNEMPLYRINFO 
+		 WHERE EMPLYR_ID = #ansRid#
+		   AND DEL_AT   = 'N'
+		   LIMIT 1
+		]]>
+	</select>    
+	
+	<select id="SrManageDAO.strCstmrName" parameterClass="SrVO" resultClass="String">
+		<![CDATA[
+    	SELECT USER_NM AS customerNm
+    	  FROM LETTNEMPLYRINFO 
+		 WHERE EMPLYR_ID = #customerId#
+		   AND DEL_AT   = 'N'
+		   LIMIT 1
+		]]>
+	</select>   
+	
+	<select id="SrManageDAO.strCstmrLanguage" parameterClass="SrVO" resultClass="String">
+		<![CDATA[
+    	SELECT LANGUAGE_CODE
+    	  FROM LETTNEMPLYRINFO 
+		 WHERE EMPLYR_ID = #customerId#
+		   AND DEL_AT   = 'N'
+		   LIMIT 1
+		]]>
+	</select>   
+	
+	<select id="SrManageDAO.strServiceLvl" parameterClass="SrVO" resultClass="String">
+		<![CDATA[
+		SELECT ROUND(AVG(CAST(POINT AS FLOAT)),0) AS strServiceLvl
+		  FROM SRMANAGE 
+		 WHERE PSTINST_CODE =  #searchPstinstCode#
+		   AND POINT IS NOT NULL AND POINT != 0
+		]]>
+	</select>  
+	
+	<update id="SrManageDAO.updateSrRealExpectTime">
+			UPDATE SRMANAGE 
+			   SET EDIT_DATE         = SYSDATE(),
+			       REAL_EXPECT_TIME  = (SELECT SUM(REAL_EXPECT_TIME)
+									 	  FROM SRMANAGE_ANSWER 
+									     WHERE SR_NO = #srNo#)
+             WHERE SR_NO = #srNo#
+	</update>
+	
+	<select id="SrManageDAO.selectMailList" resultMap="srEmailHisto">
+    	SELECT MAIL_NO
+    	      ,SENDER_EMPLYR_NM
+		      ,SENDER_EMAIL
+		      ,RECEIVER_EMAIL
+		      ,SUBJECT
+		      ,COMMENT
+		      ,FILE_ID
+    	  FROM SR_MAIL_HISTO
+         WHERE CREATE_DATE >= DATE_SUB( SYSDATE(),INTERVAL 2 DAY)
+           AND SEND_AT = 'N' 
+           AND SENDER_EMAIL IS NOT NULL
+           AND RECEIVER_EMAIL IS NOT NULL
+           ORDER BY MAIL_NO
+    </select>
+ 
+ 	<update id="SrManageDAO.updateSrEmail" >
+            UPDATE  SR_MAIL_HISTO 
+               SET  SEND_AT = 'Y'                  
+                  , EDIT_DATE        = SYSDATE()
+             WHERE  MAIL_NO = #mailNo# 
+	</update>
+	
+	<delete id="SrManageDAO.deleteCts">
+		DELETE  
+          FROM  SRCTS     
+         WHERE  SR_NO = #srNo# 
+	</delete>
+	
+	
+	<insert id="SrManageDAO.insertCts"  parameterClass="SrCtsVO">
+		insert into SRCTS(
+			SR_NO,
+			CTS_SEQ,
+			CTS_NUMBER,
+			CTS_DESC,
+			CTS_OWNER,
+			CREATE_DATE,
+			CREATOR_ID
+		) VALUES(
+			#srNo# ,
+			#cts_seq#	,
+			#cts_number# ,
+			#cts_desc# ,
+			#cts_owner#,
+			SYSDATE(),
+			#creatorId#
+    	)
+	</insert>
+
+    <select id="SrManageDAO.selectSrCtsList" parameterClass="SrVO" resultClass="SrCtsVO">
+		SELECT  *
+		  FROM SRCTS
+         WHERE SR_NO = #srNo#
+    </select>
+	
+	<select id="SrManageDAO.selectSigature" parameterClass="LoginVO" resultClass="String">
+		SELECT EMAIL_SIGNATURE 
+		  FROM LETTNEMPLYRINFO 
+		 WHERE EMPLYR_ID = #id#
+    </select>
+    
+    <select id="SrManageDAO.excelDownSrMonthReport" parameterClass="SrVO" resultMap="srReport" fetchSize = "10000">
+		<![CDATA[
+			SELECT  * 
+			  FROM  (
+			SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.SIGN_DATE DESC, ALL_LIST.SR_NO ASC) RNUM, ALL_LIST.* 
+			  FROM  (
+			  /* 구현 Sql */
+			  SELECT L.*
+			  		,REGEXP_REPLACE(IFNULL(SC.COMMENT,'') , '<[^>]*>','') AS COMMENT
+			  		,REGEXP_REPLACE(IFNULL(SA.COMMENT,'') , '<[^>]*>','') AS ANS_COMMENT
+			  FROM (			
+				SELECT A.SR_NO
+					,  A.SUBJECT
+					,  MD.CODE_NM AS MODULE_NM
+					,  CT.CODE_NM AS CATEGORY_NM
+					,  A.STATUS
+					,  ST.CODE_NM AS STATUS_NM
+					,  CN.USER_NM AS CUSTOMER_NM
+					,  DATE_FORMAT( A.SIGN_DATE, '%Y-%m-%d') AS SIGN_DATE
+					,  DATE_FORMAT( A.SCHEDULE_DATE,'%Y-%m-%d') AS SCHEDULE_DATE
+					,  RN.USER_NM AS RNAME 
+	                ,  DATE_FORMAT( A.COMPLETE_DATE,'%Y-%m-%d') AS COMPLETE_DATE
+	                ,  DATE_FORMAT( A.TEST_COMPLETE_DATE,'%Y-%m-%d') AS TEST_COMPLETE_DATE                
+	                ,  A.REAL_EXPECT_TIME
+	                ,  A.ABAP_REAL_EXPECT_TIME 
+	                ,  B.NAME AS PSTINST_NM
+	                ,  A.TCODE
+	                ,  A.POINT                
+	                ,  MD.CODE_NM_EN AS MODULE_NM_EN
+	                ,  MD.CODE_NM_CN AS MODULE_NM_CN
+					,  CT.CODE_NM_EN AS CATEGORY_NM_EN
+					,  CT.CODE_NM_CN AS CATEGORY_NM_CN
+					,  ST.CODE_NM_EN AS STATUS_NM_EN                       
+					,  ST.CODE_NM_CN AS STATUS_NM_CN                       
+	                ,  RN.USER_NM_EN AS RNAME_EN
+	                ,  B.ENAME AS PSTINST_NM_EN
+	                ,  H.ANSWER_NO
+	             	FROM  SRMANAGE A
+					INNER JOIN SRCOMPANY B ON B.PSTINST_CODE = A.PSTINST_CODE AND B.DEL_AT = 'N'
+				    LEFT OUTER JOIN LETTCCMMNDETAILCODE MD
+				    ON  MD.CODE_ID = 'SR0003' AND MD.CODE = A.MODULE_CODE
+				    LEFT OUTER JOIN LETTCCMMNDETAILCODE ST
+				    ON  ST.CODE_ID = 'SR0004' AND ST.CODE = A.STATUS
+				    LEFT OUTER JOIN LETTCCMMNDETAILCODE CT
+				    ON  CT.CODE_ID = 'SR0005' AND CT.CODE = A.CATEGORY
+				    LEFT OUTER JOIN LETTNEMPLYRINFO CN
+				    ON CN.EMPLYR_ID = A.CUSTOMER_ID
+				    LEFT OUTER JOIN LETTNEMPLYRINFO RN
+				    ON RN.EMPLYR_ID = A.RID
+				    LEFT OUTER JOIN (SELECT SR_NO, MIN(ANSWER_NO) AS ANSWER_NO
+				    					FROM SRMANAGE_ANSWER
+				    					WHERE TEMP_SAVE_AT = 'N'	
+			 						  GROUP BY SR_NO ) H ON H.SR_NO = A.SR_NO
+				 WHERE	1 = 1
+		]]>						
+			<isNotEmpty prepend="AND" property="searchConfirmDateF">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') >= #searchConfirmDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchConfirmDateT">
+				<![CDATA[ DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') <= #searchConfirmDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ CASE WHEN A.STATUS = '1006' THEN DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF# ELSE DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') <= #searchCompleteDateT# END   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ CASE WHEN A.STATUS = '1006' THEN DATE_FORMAT(A.TEST_COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT# ELSE DATE_FORMAT(A.SIGN_DATE,'%Y%m%d') <= #searchCompleteDateT# END  ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchTcode">
+				<![CDATA[ UPPER(A.TCODE) like  CONCAT('%', UPPER(  #searchTcode# ), '%')   ]]>
+			</isNotEmpty>
+			<isNotEmpty property="pstinstCodeArr" prepend="AND">
+				<![CDATA[
+				 A.PSTINST_CODE
+				]]>
+				<iterate prepend="IN" property="pstinstCodeArr" open="(" close=")" conjunction=",">
+				 #pstinstCodeArr[]#
+				</iterate>
+			</isNotEmpty>
+	   		<isEmpty property="pstinstCodeArr">
+	   			<isNotEmpty prepend="AND" property="searchPstinstCode">
+					<![CDATA[ A.PSTINST_CODE = #searchPstinstCode#   ]]>
+				</isNotEmpty>
+	   		</isEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchRid">
+				<![CDATA[ A.RID = #searchRid#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchSubject">
+				<![CDATA[ ( UPPER(A.SUBJECT) like  CONCAT('%',UPPER(#searchSubject#),'%')  ]]>
+				OR A.SR_NO IN (SELECT DISTINCT SR_NO FROM SRCTS WHERE CTS_NUMBER like CONCAT('%',UPPER(#searchSubject#), '%') ) 
+				OR A.SR_NO LIKE CONCAT('%',UPPER(#searchSubject#),'%') )
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+			 A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 #searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+			<isEmpty property="searchStatus" prepend="AND">
+				A.STATUS = ''
+			</isEmpty>
+			
+			<isNotEmpty prepend="AND" property="selectStatus">
+				<![CDATA[ A.STATUS = #selectStatus#   ]]>
+			</isNotEmpty>
+			
+<!-- 			<isEqual prepend="AND" property="searchSanctnerAt" compareValue="Y"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEqual prepend="AND" property="searchSanctnerAt" compareValue="N"> -->
+<!-- 				<![CDATA[ A.SANCTNER_AT = 'N'   ]]> -->
+<!-- 	        </isEqual> -->
+<!-- 	        <isEmpty prepend="AND" property="searchStatusRetnrn"> -->
+<!-- 				<![CDATA[ (A.SANCTNER_AT = 'Y' OR A.SANCTNER_AT IS NULL)   ]]> -->
+<!-- 			</isEmpty> -->
+	        			
+		<![CDATA[
+			) L
+		   LEFT OUTER JOIN SRMANAGE_ANSWER SA
+		   ON L.ANSWER_NO = SA.ANSWER_NO 
+		   AND L.SR_NO = SA.SR_NO
+		   LEFT OUTER JOIN SRMANAGE SC
+		   ON L.SR_NO = SC.SR_NO
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+			<isNotEmpty prepend="AND" property="searchCustomerNm">
+				<![CDATA[ UPPER(CUSTOMER_NM) like  CONCAT('%', UPPER(  #searchCustomerNm# ), '%')   ]]>
+			</isNotEmpty>			
+			
+		<![CDATA[		    
+				    ) TA		    
+		    ORDER BY CASE TA.STATUS WHEN '1006' THEN 1
+		    						WHEN '1005' THEN 2
+		    						ELSE 9 END
+		  	LIMIT #firstIndex#, 500	
+	    ]]>
+		
+	</select>
+	
+</sqlMap>            

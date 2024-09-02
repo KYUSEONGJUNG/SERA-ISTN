@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="LoginUsr">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="loginVO" type="egovframework.let.main.service.com.cmm.LoginVO"/>
+
+	<!-- 로그인 처리를 위한 resultMap -->
+	<resultMap id="login" class="egovframework.let.main.service.com.cmm.LoginVO">
+		<result property="id" column="id" columnIndex="1"/>
+		<result property="name" column="name" columnIndex="2"/>
+		<result property="email" column="email" columnIndex="4"/>
+		<result property="password" column="password" columnIndex="5"/>
+		<result property="userSe" column="userSe" columnIndex="6"/>
+		<result property="orgnztId" column="orgnztId" columnIndex="7"/>
+		<result property="uniqId" column="uniqId" columnIndex="8"/>
+		<result property="language" column="language" columnIndex="9"/>
+		<result property="languageCode" column="languageCode" columnIndex="10"/>		
+	</resultMap>
+	
+	<!-- 아이디 찾기를 위한 resultMap -->
+	<resultMap id="id" class="egovframework.let.main.service.com.cmm.LoginVO">
+		<result property="id" column="id" columnIndex="1"/>
+	</resultMap>
+	
+	<!-- 비밀번호 처리를 위한 resultMap -->
+	<resultMap id="password" class="egovframework.let.main.service.com.cmm.LoginVO">
+		<result property="password" column="password" columnIndex="1"/>
+	</resultMap>
+	
+	<!-- 일반 로그인 -->
+	<select id="loginDAO.actionLogin" resultMap="login">
+		<!-- 업무사용자 -->
+		<isEqual property="userSe" compareValue="USR">
+			<![CDATA[
+			SELECT EMPLYR_ID AS id
+			     , USER_NM AS name
+			     , PASSWORD AS password
+			     , EMAIL_ADRES AS email
+			     , 'USR' AS userSe
+			     , ORGNZT_ID AS orgnztId
+			     , ESNTL_ID AS uniqId
+			     , LANGUAGE_CODE AS language
+			     , LANGUAGE_CODE AS languageCode
+			  FROM LETTNEMPLYRINFO
+			 WHERE LOWER(EMPLYR_ID) = LOWER(#id#)
+			   AND PASSWORD = #password#
+			   AND EMPLYR_STTUS_CODE = 'P'
+			   AND DEL_AT = 'N'
+			]]>
+		</isEqual>
+	</select>
+	
+	<!-- 인증서 로그인 -->
+	<select id="loginDAO.actionCrtfctLogin" resultMap="login">
+		<![CDATA[
+		SELECT EMPLYR_ID AS id
+		     , USER_NM AS name
+		     , PASSWORD AS password
+		     , EMAIL_ADRES AS email
+		     , 'USR' AS userSe
+		     , ORGNZT_ID AS orgnztId
+		     , ESNTL_ID AS uniqId
+		  FROM LETTNEMPLYRINFO
+		 WHERE SUB_DN = #dn#
+		]]>
+	</select>
+	
+	<!-- 아이디 찾기 -->
+	<select id="loginDAO.searchId" resultMap="id">
+		<!-- 업무사용자 -->
+		<isEqual property="userSe" compareValue="USR">
+			<![CDATA[
+			SELECT EMPLYR_ID AS id
+			  FROM LETTNEMPLYRINFO
+			 WHERE REPLACE(USER_NM, ' ', '') = #name#
+			   AND EMAIL_ADRES = #email#
+			   AND EMPLYR_STTUS_CODE = 'P'
+		     LIMIT 1
+			]]>
+		</isEqual>
+	</select>
+	
+	<!-- 비밀번호 찾기 -->
+	<select id="loginDAO.searchPassword" resultMap="password">
+		<!-- 업무사용자 -->
+		<isEqual property="userSe" compareValue="USR">
+			<![CDATA[
+			SELECT PASSWORD AS password
+			  FROM LETTNEMPLYRINFO
+			 WHERE EMPLYR_ID = #id#
+			   AND USER_NM = #name#
+			   AND EMAIL_ADRES = #email#
+			   AND PASSWORD_HINT = #passwordHint#
+			   AND PASSWORD_CNSR = #passwordCnsr#
+			   AND EMPLYR_STTUS_CODE = 'P'
+		    LIMIT 1
+			]]>
+		</isEqual>
+	</select>
+	
+	<!-- 변경된 비밀번호를 저장 -->
+	<update id="loginDAO.updatePassword">
+		<!-- 업무사용자 -->
+		<isEqual property="userSe" compareValue="USR">
+			<![CDATA[
+			UPDATE LETTNEMPLYRINFO
+			   SET PASSWORD = #password#
+			 WHERE EMPLYR_ID = #id#
+			]]>
+		</isEqual>
+	</update>
+</sqlMap>

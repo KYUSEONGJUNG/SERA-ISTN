@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="SrActivityReport">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="ActivityReportVO" type="egovframework.let.sts.actrt.service.ActivityReportVO"/>
+	
+	
+	<resultMap id="activityReport" class="egovframework.let.sts.actrt.service.ActivityReportVO">
+		<result property="companyName" column="COMPANY_NAME"/>
+		<result property="signDate" column="SIGN_DATE"/>
+		<result property="scheduleDate" column="SCHEDULE_DATE"/>
+		<result property="subject" column="SUBJECT"/>
+		<result property="srNo" column="SR_NO"/>
+		<result property="requesterName" column="REQUESTER_NAME"/>
+		<result property="realExpectTime" column="REAL_EXPECT_TIME"/>
+		<result property="moduleName" column="MODULE_NAME"/>
+		<result property="responserName" column="RESPONSER_NAME"/>
+		<result property="completeDate" column="COMPLETE_DATE"/>
+	</resultMap>
+	
+	
+	<!-- SR처리율 조회 -->
+	<select id="SrActivityReportDAO.selectSrActivityReport" parameterClass="ActivityReportVO" resultClass="egovMap">
+		<!-- Activity Report 조회 -->
+		<isEqual property="searchCondition" compareValue="N">
+		<!-- SR번호별 조회 -->
+		SELECT  * 
+		  FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.responserName, ALL_LIST.srNo DESC) RNUM, ALL_LIST.* 
+		  FROM  (
+		/* 구현 Sql */
+		SELECT
+			A.SR_NO AS srNo
+			,C.NAME AS compayName
+			,DATE_FORMAT(A.SIGN_DATE, '%Y-%m-%d') AS signDate
+			,DATE_FORMAT(A.SCHEDULE_DATE, '%Y-%m-%d') AS scheduleDate
+			,A.SUBJECT AS subject
+			,(SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = A.CUSTOMER_ID) AS requesterName
+			,SUM(D.REAL_EXPECT_TIME) AS realExpectTime
+			,D.ID AS id
+			,B.CODE_NM AS moduleName
+			,(SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = D.ID) AS responserName
+			,DATE_FORMAT(A.COMPLETE_DATE, '%Y-%m-%d') AS completeDate
+		FROM
+			SRMANAGE A
+		LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+			ON B.CODE = A.MODULE_CODE AND B.CODE_ID = 'SR0003'
+		LEFT OUTER JOIN SRCOMPANY C
+			ON C.PSTINST_CODE = A.PSTINST_CODE    <!--  AND C.DEL_AT = 'N'-->
+		INNER JOIN SRMANAGE_ANSWER D
+			ON A.SR_NO = D.SR_NO
+			AND D.ANSWER_SE = '10'
+			AND D.TEMP_SAVE_AT = 'N'				<!-- 해결일자(완료일) -->
+		WHERE 1 = 1
+			<isNotEmpty prepend="AND" property="pstinstCode">
+				A.PSTINST_CODE = #pstinstCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateT">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+				A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 	#searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+			
+	    GROUP BY A.SR_NO, A.PSTINST_CODE, A.SCHEDULE_DATE, A.SUBJECT, A.CUSTOMER_ID, A.MODULE_CODE, A.RID, A.COMPLETE_DATE, D.ID
+	    
+	    <![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+				    ) TA
+			 WHERE  RNUM  > #firstIndex#
+			   AND  RNUM <= #firstIndex# + #recordCountPerPage#
+		   	ORDER BY RNUM
+		]]>	  	
+		</isEqual>
+		
+		<isEqual property="searchCondition" compareValue="R">
+		<!-- 담당자별 조회 -->
+		SELECT  * 
+		  FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.srNo DESC, ALL_LIST.responserName) RNUM, ALL_LIST.* 
+		  FROM  (
+		/* 구현 Sql */		
+		SELECT 
+			A.SR_NO AS srNo	
+			, C.NAME AS compayName
+			, DATE_FORMAT(A.SIGN_DATE, '%Y-%m-%d') AS signDate	
+			, DATE_FORMAT(A.SCHEDULE_DATE, '%Y-%m-%d') AS scheduleDate
+			, A.SUBJECT AS subject	
+			, (SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = A.CUSTOMER_ID) AS requesterName
+			, SUM(D.REAL_EXPECT_TIME) AS realExpectTime
+			, A.RID AS id
+			, B.CODE_NM AS moduleName
+			, (SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = D.ID) AS responserName
+			, DATE_FORMAT( A.COMPLETE_DATE,'%Y-%m-%d') AS completeDate
+		FROM SRMANAGE A
+		LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+			ON B.CODE = A.MODULE_CODE AND B.CODE_ID = 'SR0003'
+		LEFT OUTER JOIN SRCOMPANY C
+			ON C.PSTINST_CODE = A.PSTINST_CODE   <!--  AND C.DEL_AT = 'N' -->
+		INNER JOIN SRMANAGE_ANSWER D
+			ON A.SR_NO = D.SR_NO
+			AND D.ANSWER_SE = '10'
+			AND D.TEMP_SAVE_AT = 'N'
+		WHERE 1 = 1 
+			<isNotEmpty prepend="AND" property="pstinstCode">
+				A.PSTINST_CODE = #pstinstCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateT">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+				A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 	#searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+			
+	   GROUP BY A.SR_NO, A.PSTINST_CODE, A.SCHEDULE_DATE, A.SUBJECT, A.CUSTOMER_ID, A.REAL_EXPECT_TIME, A.MODULE_CODE, A.RID, A.COMPLETE_DATE, D.ID
+	    
+	    <![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+				    ) TA
+			 WHERE  RNUM  > #firstIndex#
+			   AND  RNUM <= #firstIndex# + #recordCountPerPage#
+		   ORDER BY RNUM
+		]]>	  		   
+		</isEqual>
+	</select>
+	
+	<!-- SR총 수량을 가져온다. -->
+	<select id="SrActivityReportDAO.selectSrActivityReportTotCnt" parameterClass="ActivityReportVO" resultClass="int">
+		<isEqual property="searchCondition" compareValue="N">
+		<!-- SR번호별 조회 -->
+		SELECT COUNT(*) as totCnt 
+		  FROM ( SELECT A.SR_NO AS srNo										<!-- SR번호 -->
+			 		 , (SELECT C.NAME 
+				  	 	  FROM SRCOMPANY C
+				 		 WHERE C.PSTINST_CODE = A.PSTINST_CODE 
+				          <!--  AND C.DEL_AT = 'N' --> ) AS compayName				<!-- 고객사명 -->
+			 		 , (SELECT DATE_FORMAT( SIGN_DATE,'%Y-%m-%d') 
+			 			  FROM SRMANAGE 
+			 			 WHERE SR_NO = A.SR_NO) AS signDate					<!-- 요청일 -->
+			 		 , A.SCHEDULE_DATE AS scheduleDate						<!-- 완료예정일 -->
+			 		 , A.SUBJECT AS subject									<!-- 제목 -->
+			 		 , (SELECT USER_NM 
+			 		      FROM LETTNEMPLYRINFO 
+			 		     WHERE EMPLYR_ID = A.CUSTOMER_ID) AS requesterName	<!-- 요청자성명 -->
+			 		 , SUM(B.REAL_EXPECT_TIME) AS realExpectTime			<!-- 실적공수(H) -->
+			 		 , B.ID	AS id										<!-- 담당자ID -->
+			 		 , (SELECT CODE_NM 
+			 		      FROM LETTCCMMNDETAILCODE 
+						 WHERE CODE_ID = 'SR0003' 
+						   AND CODE = A.MODULE_CODE) AS moduleName			<!-- 모듈(분야) -->
+			 		 , (SELECT USER_NM
+			 		      FROM LETTNEMPLYRINFO 
+			 		     WHERE EMPLYR_ID = B.ID) AS reponserName			<!-- 담당자(처리자) -->
+			 		 , A.COMPLETE_DATE AS completeDate						<!-- 해결일자(완료일) -->
+		  		 FROM SRMANAGE A 
+		  		 INNER JOIN SRMANAGE_ANSWER B ON A.SR_NO = B.SR_NO
+		  		 	AND B.ANSWER_SE = '10'
+					AND B.TEMP_SAVE_AT = 'N'
+				WHERE 1 = 1 
+				<isNotEmpty prepend="AND" property="pstinstCode">
+					A.PSTINST_CODE = #pstinstCode#
+				</isNotEmpty>
+		        <isNotEmpty prepend="AND" property="searchDateF">
+					<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchDateT">
+					<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchModuleCode">
+					<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+				</isNotEmpty>
+				
+				<isNotEmpty property="searchStatus" prepend="AND">
+				<![CDATA[
+					A.STATUS
+				]]>
+				<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+				 	#searchStatus[]#
+				</iterate>
+				</isNotEmpty>
+				
+		    GROUP BY A.SR_NO, A.PSTINST_CODE, A.SCHEDULE_DATE, A.SUBJECT, A.CUSTOMER_ID, A.MODULE_CODE, A.RID, A.COMPLETE_DATE, B.ID
+	        	) ALL_LIST
+		</isEqual>
+		
+		<isEqual property="searchCondition" compareValue="R">
+		<!-- 담당자별 조회 -->
+		SELECT  COUNT(*) as totCnt 
+		  FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.srNo) RNUM, ALL_LIST.* 
+		  FROM  (
+		/* 구현 Sql */		
+		SELECT 
+			A.SR_NO AS srNo	
+			, C.NAME AS compayName
+			, DATE_FORMAT(A.SIGN_DATE, '%Y-%m-%d') AS signDate	
+			, DATE_FORMAT(A.SCHEDULE_DATE, '%Y-%m-%d') AS scheduleDate
+			, A.SUBJECT AS subject	
+			, (SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = A.CUSTOMER_ID) AS requesterName
+			, SUM(D.REAL_EXPECT_TIME) AS realExpectTime
+			, A.RID AS id
+			, B.CODE_NM AS moduleName
+			, (SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = D.ID) AS responserName
+			, DATE_FORMAT( A.COMPLETE_DATE,'%Y-%m-%d') AS completeDate
+		FROM SRMANAGE A
+		LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+			ON B.CODE = A.MODULE_CODE AND B.CODE_ID = 'SR0003'
+		LEFT OUTER JOIN SRCOMPANY C
+			ON C.PSTINST_CODE = A.PSTINST_CODE <!--  AND C.DEL_AT = 'N' -->
+		INNER JOIN SRMANAGE_ANSWER D
+			ON A.SR_NO = D.SR_NO
+			AND D.ANSWER_SE = '10'
+			AND D.TEMP_SAVE_AT = 'N'
+		WHERE 1 = 1 
+			<isNotEmpty prepend="AND" property="pstinstCode">
+				A.PSTINST_CODE = #pstinstCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateT">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+				A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 	#searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+			
+	   GROUP BY A.SR_NO, A.PSTINST_CODE, A.SCHEDULE_DATE, A.SUBJECT, A.CUSTOMER_ID, A.REAL_EXPECT_TIME, A.MODULE_CODE, A.RID, A.COMPLETE_DATE, D.ID
+	    
+	    <![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+				    ) TA
+	    ]]>
+		</isEqual>
+	</select>
+	
+	
+	<!-- SR Activity Report 엑셀 다운로드 -->
+	<select id="SrActivityReportDAO.excelDownActivityReportList" parameterClass="ActivityReportVO" resultMap="activityReport">
+		<isEqual property="searchCondition" compareValue="N">
+		<!-- SR번호별 조회 -->
+		SELECT  * 
+		  FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.RESPONSER_NAME, ALL_LIST.SR_NO DESC) RNUM, ALL_LIST.* 
+		  FROM  (
+		/* 구현 Sql */
+		SELECT
+			A.SR_NO 
+			,C.NAME AS COMPANY_NAME
+			,DATE_FORMAT(A.SIGN_DATE, '%Y-%m-%d') AS SIGN_DATE
+			,DATE_FORMAT(A.SCHEDULE_DATE, '%Y-%m-%d') AS SCHEDULE_DATE
+			,A.SUBJECT
+			,(SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = A.CUSTOMER_ID) AS REQUESTER_NAME
+			,SUM(D.REAL_EXPECT_TIME) AS REAL_EXPECT_TIME
+			,D.ID
+			,B.CODE_NM AS MODULE_NAME
+			,(SELECT USER_NM FROM LETTNEMPLYRINFO WHERE EMPLYR_ID = D.ID) AS RESPONSER_NAME
+			,DATE_FORMAT(A.COMPLETE_DATE, '%Y-%m-%d') AS COMPLETE_DATE
+		FROM
+			SRMANAGE A
+		LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+			ON B.CODE = A.MODULE_CODE AND B.CODE_ID = 'SR0003'
+		LEFT OUTER JOIN SRCOMPANY C
+			ON C.PSTINST_CODE = A.PSTINST_CODE <!--  AND C.DEL_AT = 'N' -->
+		INNER JOIN SRMANAGE_ANSWER D
+			ON A.SR_NO = D.SR_NO
+			AND D.ANSWER_SE = '10'
+			AND D.TEMP_SAVE_AT = 'N'
+		WHERE 1 = 1
+			<isNotEmpty prepend="AND" property="pstinstCode">
+				A.PSTINST_CODE = #pstinstCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateT">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+				A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 	#searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+			
+	    GROUP BY A.SR_NO, A.PSTINST_CODE, A.SCHEDULE_DATE, A.SUBJECT, A.CUSTOMER_ID, A.MODULE_CODE, A.RID, A.COMPLETE_DATE, D.ID
+	    
+	    <![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+				    ) TA
+		    ORDER BY RNUM
+		]]>	  	
+		</isEqual>
+		
+		<isEqual property="searchCondition" compareValue="R">
+		<!-- 담당자별 조회 -->
+		SELECT  * 
+		  FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.SR_NO DESC, ALL_LIST.RESPONSER_NAME) RNUM, ALL_LIST.* 
+		  FROM  (
+		/* 구현 Sql */		
+		SELECT 
+			A.SR_NO	
+			, C.NAME AS COMPANY_NAME
+			, DATE_FORMAT(A.SIGN_DATE, '%Y-%m-%d') AS SIGN_DATE	
+			, DATE_FORMAT(A.SCHEDULE_DATE, '%Y-%m-%d') AS SCHEDULE_DATE
+			, A.SUBJECT	
+			, (SELECT USER_NM from LETTNEMPLYRINFO where EMPLYR_ID = A.CUSTOMER_ID) AS REQUESTER_NAME
+			, SUM(D.REAL_EXPECT_TIME) AS REAL_EXPECT_TIME
+			, A.RID
+			, B.CODE_NM AS MODULE_NAME
+			, (SELECT USER_NM from LETTNEMPLYRINFO where EMPLYR_ID = D.ID) AS RESPONSER_NAME
+			, DATE_FORMAT( A.COMPLETE_DATE,'%Y-%m-%d') AS COMPLETE_DATE
+		FROM SRMANAGE A
+		LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+			ON B.CODE = A.MODULE_CODE AND B.CODE_ID = 'SR0003'
+		LEFT OUTER JOIN SRCOMPANY C
+			ON C.PSTINST_CODE = A.PSTINST_CODE <!-- AND C.DEL_AT = 'N' -->
+		INNER JOIN SRMANAGE_ANSWER D
+			ON A.SR_NO = D.SR_NO
+			AND D.ANSWER_SE = '10'
+			AND D.TEMP_SAVE_AT = 'N'
+		WHERE 1 = 1 
+			<isNotEmpty prepend="AND" property="pstinstCode">
+				A.PSTINST_CODE = #pstinstCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d')>= #searchDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateT">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+				A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 	#searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+			
+	   GROUP BY A.SR_NO, A.PSTINST_CODE, A.SCHEDULE_DATE, A.SUBJECT, A.CUSTOMER_ID, A.REAL_EXPECT_TIME, A.MODULE_CODE, A.RID, A.COMPLETE_DATE, D.ID
+	    
+	    <![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+				    ) TA
+		    ORDER BY RNUM
+		]]>	  		   
+		</isEqual>
+	</select>
+</sqlMap>

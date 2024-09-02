@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="User">
+
+    <typeAlias  alias="egovMap"      type = "org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+    <typeAlias  alias="searchVO" type = "egovframework.let.uss.umt.service.UserDefaultVO"/>
+    <typeAlias  alias="userVO"       type = "egovframework.let.uss.umt.service.UserManageVO"/>
+
+    <select id="userManageDAO.selectUserList_S" parameterClass="searchVO" resultClass="egovMap">
+SELECT * FROM ( SELECT ROW_NUMBER() OVER (ORDER BY TB.frstRegistPnttm DESC) rn, TB.* FROM (
+    SELECT
+        A.ESNTL_ID               as "uniqId",
+        'USR03'               as "userTy",
+        A.EMPLYR_ID             as "userId",
+        A.USER_NM             as "userNm",
+        A.USER_NM_EN             as "userNmEn",
+        A.PSTINST_CODE             as "pstinstCode",
+        C.NAME             as "pstinstNm",
+        B.AUTHOR_CODE             as "authorCode",
+        D.AUTHOR_NM             as "authorNm",
+        A.EMAIL_ADRES           as "emailAdres",
+        A.MBTLNUM           as "moblphonNo",
+        A.OFFM_TELNO           as "offselectUsermTelno",
+        A.EMAIL_YN           as "emailYn",
+        DATE_FORMAT(A.FRST_REGIST_PNTTM, '%Y-%m-%d')              as "frstRegistPnttm",
+        A.DEL_AT     as "delAt"
+    FROM    LETTNEMPLYRINFO A 
+    		LEFT OUTER JOIN LETTNEMPLYRSCRTYESTBS B
+    					 ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID	
+    	    LEFT OUTER JOIN SRCOMPANY C ON C.PSTINST_CODE = A.PSTINST_CODE
+    	    LEFT OUTER JOIN LETTNAUTHORINFO D ON B.AUTHOR_CODE = D.AUTHOR_CODE
+        WHERE 1=1
+        <isNotEmpty prepend="AND" property="searchEmplyrId">
+        	<![CDATA[ LOWER(A.EMPLYR_ID) like  LOWER(CONCAT('%', #searchEmplyrId#, '%'))   ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="searchUserNm">
+            <![CDATA[ A.USER_NM like  CONCAT('%', #searchUserNm#, '%')   ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="searchDelAt">
+            <![CDATA[ A.DEL_AT = #searchDelAt#   ]]>
+		</isNotEmpty>		
+		<isNotEmpty prepend="AND" property="searchPstinstCode">
+			<![CDATA[ C.PSTINST_CODE = #searchPstinstCode#   ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="authorCode">
+			<![CDATA[ B.AUTHOR_CODE = #authorCode#   ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="emailYn">
+			<isEqual property="emailYn" compareValue="N">
+				<![CDATA[ A.EMAIL_YN IS NULL AND B.AUTHOR_CODE = 'ROLE_MNGR'  ]]>
+			</isEqual>
+			<isEqual property="emailYn" compareValue="Y">
+				<![CDATA[ A.EMAIL_YN = #emailYn#   ]]>
+			</isEqual>
+			<isEqual property="emailYn" compareValue="X">
+				<![CDATA[ A.EMAIL_YN IS NULL AND B.AUTHOR_CODE != 'ROLE_MNGR'  ]]>
+			</isEqual>			
+		</isNotEmpty>
+		
+        ) TB
+			    
+         ) TA WHERE rn BETWEEN #firstIndex# + 1 AND #firstIndex# + #recordCountPerPage#
+    </select>
+    
+    <select id="userManageDAO.selectUserListTotCnt_S" parameterClass="searchVO" resultClass="int">
+            SELECT COUNT(1) totcnt FROM(
+	            SELECT A.EMPLYR_ID
+		            , A.PSTINST_CODE AS pstinstCode
+	            FROM    LETTNEMPLYRINFO A
+	            LEFT OUTER JOIN LETTNEMPLYRSCRTYESTBS B
+    					 ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID
+	            LEFT OUTER JOIN SRCOMPANY C ON C.PSTINST_CODE = A.PSTINST_CODE
+	            WHERE 1=1
+	            <isNotEmpty prepend="AND" property="searchEmplyrId">
+		        	<![CDATA[ LOWER(A.EMPLYR_ID) like  LOWER(CONCAT('%', #searchEmplyrId#, '%'))   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchUserNm">
+		            <![CDATA[ A.USER_NM like  CONCAT('%', #searchUserNm#, '%')   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchDelAt">
+		            <![CDATA[ A.DEL_AT = #searchDelAt#   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchPstinstCode">
+					<![CDATA[ C.PSTINST_CODE = #searchPstinstCode#   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="authorCode">
+					<![CDATA[ B.AUTHOR_CODE = #authorCode#   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="emailYn">
+					<isEqual property="emailYn" compareValue="N">
+						<![CDATA[ A.EMAIL_YN IS NULL AND B.AUTHOR_CODE = 'ROLE_MNGR'  ]]>
+					</isEqual>
+					<isEqual property="emailYn" compareValue="Y">
+						<![CDATA[ A.EMAIL_YN = #emailYn#   ]]>
+					</isEqual>
+					<isEqual property="emailYn" compareValue="X">
+						<![CDATA[ A.EMAIL_YN IS NULL AND B.AUTHOR_CODE != 'ROLE_MNGR'  ]]>
+					</isEqual>			
+				</isNotEmpty>
+				
+				) ALL_LIST			  
+    </select>
+    
+    <insert id="userManageDAO.insertUser_S">
+        <![CDATA[
+            INSERT INTO LETTNEMPLYRINFO 
+                (   EMPLYR_ID
+		           ,ORGNZT_ID
+		           ,USER_NM
+		           ,USER_NM_EN
+		           ,PASSWORD
+		           ,PASSWORD_HINT
+		           ,PASSWORD_CNSR
+		           ,OFFM_TELNO
+		           ,MBTLNUM
+		           ,EMAIL_ADRES
+		           ,EMAIL_YN
+		           ,GROUP_ID
+		           ,PSTINST_CODE
+		           ,EMPLYR_STTUS_CODE
+		           ,ESNTL_ID
+		           ,DEL_AT
+		           ,FRST_REGIST_PNTTM
+		           ,NOTE
+		           ,LANGUAGE_CODE    )
+            VALUES (LOWER(#emplyrId#)
+					,'ORGNZT_0000000000000'
+					,#emplyrNm#
+					,#emplyrNmEn#
+					,#password#
+					,#passwordHint#
+					,#passwordCnsr#
+					,#offmTelno#
+					,#moblphonNo#
+					,#emailAdres#
+					,#emailYn#
+					,'GROUP_00000000000000'
+					,#pstinstCode#
+					,'P'
+					,#uniqId#
+					,'N'
+					,SYSDATE()
+					,#note#
+					,#languageCode#           )
+        ]]>
+    </insert>
+    
+    <update id="userManageDAO.deleteUser_S">
+        <![CDATA[
+            UPDATE LETTNEMPLYRINFO 
+            SET DEL_AT           = 'Y'
+            WHERE ESNTL_ID = #delId#            
+        ]]>
+    </update>
+    
+    <select id="userManageDAO.selectUser_S" resultClass="userVO">
+        <![CDATA[
+            SELECT A.ESNTL_ID           uniqId            ,
+                   'USR03'           userTy,
+		           A.EMPLYR_ID         emplyrId          ,
+		           A.USER_NM         emplyrNm          ,
+		           A.USER_NM_EN        emplyrNmEn          ,
+		           A.PASSWORD          password          ,
+		           A.PASSWORD_HINT     passwordHint      ,
+		           A.PASSWORD_CNSR     passwordCnsr      ,
+		           A.OFFM_TELNO        offmTelno         ,
+		           A.MBTLNUM       moblphonNo        ,
+		           A.EMAIL_ADRES       emailAdres        ,
+		           A.EMAIL_YN       emailYn        ,
+		           A.GROUP_ID          groupId           ,
+		           A.ORGNZT_ID         orgnztId          ,
+		           A.PSTINST_CODE        pstinstCode         ,
+		           A.EMAIL_SIGNATURE        emailSignature         ,
+		           A.LANGUAGE_CODE        languageCode         ,
+		           B.AUTHOR_CODE        authorCode,
+		           (CASE WHEN B.SCRTY_DTRMN_TRGET_ID IS NULL THEN 'N'
+                         ELSE 'Y' 
+                     END) AS regYn,
+		           A.EMPLYR_STTUS_CODE emplyrSttusCode   ,
+		           A.DEL_AT            delAt,
+		           DATE_FORMAT( A.FRST_REGIST_PNTTM ,'%Y-%m-%d %T') as frstRegistPnttm,
+		           DATE_FORMAT( A.LAST_UPDT_PNTTM ,'%Y-%m-%d %T') as lastUpdtPnttm,
+		           A.NOTE              note,
+		           (SELECT DISTINCT NAME
+                      FROM SRCOMPANY 
+                     WHERE PSTINST_CODE = A.PSTINST_CODE
+                       AND DEL_AT = 'N') pstinstNm,
+                   (SELECT DISTINCT ENAME
+                      FROM SRCOMPANY 
+                     WHERE PSTINST_CODE = A.PSTINST_CODE
+                       AND DEL_AT = 'N') pstinstNmEn,
+                   A.DEL_AT delAt
+              FROM LETTNEMPLYRINFO A
+              	LEFT OUTER JOIN LETTNEMPLYRSCRTYESTBS B
+    					 ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID	
+             WHERE EMPLYR_ID=#uniqId#
+        ]]>
+    </select>
+    
+    <update id="userManageDAO.updateUser_S">
+        <![CDATA[
+            UPDATE LETTNEMPLYRINFO 
+            SET USER_NM           = #emplyrNm#        ,
+                USER_NM_EN        = #emplyrNmEn#      ,
+                PASSWORD_HINT     = #passwordHint#    ,
+                PASSWORD_CNSR     = #passwordCnsr#    ,
+                MBTLNUM           = #moblphonNo#      ,
+                OFFM_TELNO        = #offmTelno#       ,
+                EMAIL_ADRES       = #emailAdres#      ,
+                EMAIL_YN		  = #emailYn#      	  ,
+                NOTE              = #note#            ,
+                LANGUAGE_CODE     = #languageCode#    ,
+                EMAIL_SIGNATURE   = #emailSignature#  ,
+                DEL_AT            = #delAt#           ,
+       			LAST_UPDT_PNTTM   = SYSDATE()           
+            WHERE ESNTL_ID = #uniqId#
+        ]]>
+    </update>
+    
+    <insert id="userManageDAO.insertUserHistory_S">
+        <![CDATA[
+            INSERT INTO LETTHEMPLYRINFOCHANGEDTLS 
+                (   EMPLYR_ID
+		           ,ORGNZT_ID
+		           ,USER_NM
+		           ,PASSWORD
+		           ,PASSWORD_HINT
+		           ,PASSWORD_CNSR
+		           ,OFFM_TELNO
+		           ,MBTLNUM
+		           ,EMAIL_ADRES
+		           ,GROUP_ID
+		           ,PSTINST_CODE
+		           ,EMPLYR_STTUS_CODE
+		           ,ESNTL_ID
+		           ,DEL_AT
+		           ,FRST_REGIST_PNTTM
+		           ,NOTE 
+                   ,CHANGE_DE           )
+            SELECT 
+                    EMPLYR_ID
+		           ,ORGNZT_ID
+		           ,USER_NM
+		           ,PASSWORD
+		           ,PASSWORD_HINT
+		           ,PASSWORD_CNSR
+		           ,OFFM_TELNO
+		           ,MBTLNUM
+		           ,EMAIL_ADRES
+		           ,GROUP_ID
+		           ,PSTINST_CODE
+		           ,EMPLYR_STTUS_CODE
+		           ,ESNTL_ID
+		           ,DEL_AT
+		           ,FRST_REGIST_PNTTM
+		           ,NOTE 
+                   ,SYSDATE()
+            FROM LETTNEMPLYRINFO
+            WHERE ESNTL_ID = #uniqId#
+        ]]>
+    </insert>
+    
+    <select id="userManageDAO.checkIdDplct_S" resultClass="int">
+        <![CDATA[
+            SELECT COUNT(1) usedCnt
+                FROM(
+                SELECT
+                    EMPLYR_ID             userId
+                FROM    LETTNEMPLYRINFO
+                ) A
+            WHERE LOWER(userId) = LOWER(#checkId#)
+        ]]>
+    </select>
+    
+    <update id="userManageDAO.updatePassword_S">
+        <![CDATA[
+            UPDATE LETTNEMPLYRINFO 
+            SET 
+                   PASSWORD   =  #password#
+            WHERE  ESNTL_ID  = #uniqId#
+        ]]>
+    </update>
+    
+    <select id="userManageDAO.selectPassword_S" resultClass="userVO">
+        <![CDATA[
+            SELECT
+                    PASSWORD          password 
+            FROM    LETTNEMPLYRINFO
+            WHERE   ESNTL_ID=#uniqId#
+        ]]>
+    </select>
+    
+    <select id="userManageDAO.selectChargerList_S" resultClass="egovMap">
+    SELECT A.EMPLYR_ID           as "userId", 
+           A.USER_NM             as "userNm",
+           A.USER_NM_EN          as "userNmEn"
+    FROM    LETTNEMPLYRINFO A 
+    		LEFT OUTER JOIN LETTNEMPLYRSCRTYESTBS B
+    					 ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID	
+        WHERE B.AUTHOR_CODE IN ('ROLE_MNGR','ROLE_CHARGER','ROLE_COOPERATION')
+          AND A.DEL_AT = 'N'
+        ORDER BY A.USER_NM
+    </select>
+    
+    <select id="userManageDAO.selectChargerNmList_S" resultClass="egovMap">
+    SELECT A.EMPLYR_ID           as "userId", 
+           CONCAT(A.USER_NM ,' ( ', A.MBTLNUM,' ) ')  as "userNm",
+           CONCAT(A.USER_NM_EN ,' ( ', A.MBTLNUM,' ) ')  as "userNmEn"
+    FROM    LETTNEMPLYRINFO A 
+    		LEFT OUTER JOIN LETTNEMPLYRSCRTYESTBS B
+    					 ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID	
+        WHERE B.AUTHOR_CODE IN ('ROLE_MNGR','ROLE_CHARGER','ROLE_COOPERATION')
+          AND A.DEL_AT = 'N'
+        ORDER BY A.USER_NM
+    </select>
+    
+    <select id="userManageDAO.selectEmailYn" parameterClass="userVO" resultClass="int">
+		<![CDATA[
+			SELECT COUNT(*)
+			FROM LETTNEMPLYRSCRTYESTBS A
+			LEFT OUTER JOIN LETTNEMPLYRINFO B
+				ON A.SCRTY_DTRMN_TRGET_ID = B.ESNTL_ID
+				AND A.AUTHOR_CODE = 'ROLE_MNGR'
+			WHERE 1=1
+				AND B.EMAIL_YN = 'Y'
+				AND B.EMPLYR_ID != #emplyrId#;
+		]]>
+	</select>
+    
+</sqlMap>

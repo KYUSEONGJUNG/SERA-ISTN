@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="SrMinbyProcessSttusCharge">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="MinbyProcessSttusChargeVO" type="egovframework.let.sts.mprcstsc.service.MinbyProcessSttusChargeVO"/>
+
+	<resultMap id="minbyProcessSttusChargeReport" class="egovframework.let.sts.mprcstsc.service.MinbyProcessSttusChargeVO">
+		<result property="moduleCode" column="MODULE_CODE"/>
+		<result property="moduleName" column="MODULE_NAME"/>
+		<result property="moduleNameEn" column="MODULE_NAME_EN"/>
+		<result property="moduleNameCn" column="MODULE_NAME_CN"/>
+		<result property="rname" column="RNAME"/>
+		<result property="jan" column="JAN"/>
+		<result property="feb" column="FEB"/>
+		<result property="mar" column="MAR"/>
+		<result property="apr" column="APR"/>
+		<result property="may" column="MAY"/>
+		<result property="jun" column="JUN"/>
+		<result property="jul" column="JUL"/>
+		<result property="aug" column="AUG"/>
+		<result property="sep" column="SEP"/>
+		<result property="oct" column="OCT"/>
+		<result property="nov" column="NOV"/>
+		<result property="dec" column="DEC"/>
+		<result property="total" column="TOTAL"/>
+		<result property="jan1" column="JAN1"/>
+		<result property="feb1" column="FEB1"/>
+		<result property="mar1" column="MAR1"/>
+		<result property="apr1" column="APR1"/>
+		<result property="may1" column="MAY1"/>
+		<result property="jun1" column="JUN1"/>
+		<result property="jul1" column="JUL1"/>
+		<result property="aug1" column="AUG1"/>
+		<result property="sep1" column="SEP1"/>
+		<result property="oct1" column="OCT1"/>
+		<result property="nov1" column="NOV1"/>
+		<result property="dec1" column="DEC1"/>
+		<result property="total1" column="TOTAL1"/>
+	</resultMap>
+		
+	<!-- SR처리율 조회 -->
+	<select id="SrMinbyProcessSttusChargeDAO.selectSrMinbyProcessSttusCharge" parameterClass="MinbyProcessSttusChargeVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT
+				CASE
+					WHEN A.MODULE_CODE LIKE '9999' THEN '합계'
+					 WHEN D.USER_NM IS NULL THEN CONCAT(B.CODE_NM , ' 합계')
+					ELSE B.CODE_NM
+				END AS moduleName,
+				CASE
+					WHEN A.MODULE_CODE LIKE '9999' THEN 'Total'
+					 WHEN D.USER_NM IS NULL THEN CONCAT(B.CODE_NM , ' 합계')
+					ELSE B.CODE_NM_EN
+				END AS moduleNameEn,
+				CASE 
+					WHEN A.MODULE_CODE LIKE '9999' THEN '总计'
+					 WHEN D.USER_NM IS NULL THEN CONCAT(B.CODE_NM , ' 합계')
+					ELSE B.CODE_NM_CN
+				END AS moduleNameCn,
+				A.MODULE_CODE AS moduleCode,            
+				IFNULL(D.USER_NM, ' ') AS rname, 
+				MAX(IF(mon = '1', cnt, 0)) as jan,
+				MAX(IF(mon = '2', cnt, 0)) as feb,
+				MAX(IF(mon = '3', cnt, 0)) as mar,
+				MAX(IF(mon = '4', cnt, 0)) as apr,
+				MAX(IF(mon = '5', cnt, 0)) as may,
+				MAX(IF(mon = '6', cnt, 0)) as jun,
+				MAX(IF(mon = '7', cnt, 0)) as jul,
+				MAX(IF(mon = '8', cnt, 0)) as aug,
+				MAX(IF(mon = '9', cnt, 0)) as sep,
+				MAX(IF(mon = '10', cnt, 0))as `oct`,
+				MAX(IF(mon = '11', cnt, 0))as nov,
+				MAX(IF(mon = '12', cnt, 0))as `dec`,
+				MAX(IF(mon = '합계', cnt, 0))as `total`,
+				MAX(IF(mon = '1', cnt1, 0)) as jan1,
+				MAX(IF(mon = '2', cnt1, 0)) as feb1,
+				MAX(IF(mon = '3', cnt1, 0)) as mar1,
+				MAX(IF(mon = '4', cnt1, 0)) as apr1,
+				MAX(IF(mon = '5', cnt1, 0)) as may1,
+				MAX(IF(mon = '6', cnt1, 0)) as jun1,
+				MAX(IF(mon = '7', cnt1, 0)) as jul1,
+				MAX(IF(mon = '8', cnt1, 0)) as aug1,
+				MAX(IF(mon = '9', cnt1, 0)) as sep1,
+				MAX(IF(mon = '10', cnt1, 0))as `oct1`,
+				MAX(IF(mon = '11', cnt1, 0))as nov1,
+				MAX(IF(mon = '12', cnt1, 0))as `dec1`,
+				MAX(IF(mon = '합계', cnt1, 0))as `total1`
+			FROM
+				(
+				SELECT 
+						COUNT(MODULE_CODE) AS cnt,
+						SUM(REAL_EXPECT_TIME) AS cnt1,
+						MONTH(TEST_COMPLETE_DATE) AS mon,
+					 MODULE_CODE,
+					RID
+				FROM
+					SRMANAGE
+				WHERE
+					1 = 1
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+					AND YEAR(TEST_COMPLETE_DATE) = #searchYear#]]>
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchModuleCode">
+						<![CDATA[ MODULE_CODE = #searchModuleCode#   ]]>
+					</isNotEmpty>
+				<![CDATA[GROUP BY
+					MODULE_CODE,
+						MONTH(TEST_COMPLETE_DATE),
+						RID WITH ROLLUP
+						HAVING MODULE_CODE IS NOT NULL 
+					UNION
+				SELECT 
+						COUNT(MODULE_CODE) AS cnt,
+						SUM(REAL_EXPECT_TIME) AS cnt1,
+						MONTH(TEST_COMPLETE_DATE) AS mon,
+						'9999' AS MODULE_CODE,
+					'합계' AS RID
+				FROM
+					SRMANAGE
+				WHERE
+					1 = 1
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))	
+						AND YEAR(TEST_COMPLETE_DATE) = #searchYear#
+					]]>
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchModuleCode">
+						<![CDATA[ MODULE_CODE = #searchModuleCode#   ]]>
+					</isNotEmpty>
+	<![CDATA[GROUP BY 
+						MONTH(TEST_COMPLETE_DATE)
+				UNION 
+				SELECT 
+						COUNT(MODULE_CODE) AS cnt,
+						SUM(REAL_EXPECT_TIME) AS cnt1,
+						'합계' AS mon,
+						IFNULL(MODULE_CODE,'9999'),
+						CASE
+							 WHEN MODULE_CODE IS NULL THEN '합계'
+							ELSE RID
+						END	AS RID
+				FROM
+					isprintSr.SRMANAGE
+				WHERE
+					1 = 1
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+						AND YEAR(TEST_COMPLETE_DATE) = #searchYear#]]>
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchModuleCode">
+						<![CDATA[ MODULE_CODE = #searchModuleCode#   ]]>
+					</isNotEmpty>
+	<![CDATA[GROUP BY
+						MODULE_CODE , RID WITH ROLLUP 
+					) A
+			LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+					ON
+				A.MODULE_CODE = B.CODE
+				AND CODE_ID = 'SR0003'
+			LEFT OUTER JOIN LETTNEMPLYRINFO D ON D.EMPLYR_ID = A.RID
+			GROUP BY
+				A.RID,
+				A.MODULE_CODE 
+			ORDER BY A.MODULE_CODE, A.RID ASC;
+		]]>
+	</select>
+	
+	<!-- SR총 수량을 가져온다. -->
+	<select id="SrMinbyProcessSttusChargeDAO.selectSrMinbyProcessSttusChargeTotCnt" parameterClass="MinbyProcessSttusChargeVO" resultClass="int">
+		<isEqual property="searchDateCondition" compareValue="R">
+		<!-- 요청일 기준 -->
+		SELECT COUNT(*) as totCnt 
+		  FROM ( SELECT A.MODULE_CODE
+		  		   FROM SRMANAGE AS A
+				  WHERE <![CDATA[ DATE_FORMAT(`SIGN_DATE`, '%Y') = #searchYear# ]]>
+				    AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+				 	<isNotEmpty prepend="AND" property="pstinstCode">
+						A.PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+				 	<isNotEmpty prepend="AND" property="searchModuleCode">
+						<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+					</isNotEmpty>
+			        GROUP BY A.MODULE_CODE ) AS ALL_LIST
+		</isEqual>
+		
+		<isEqual property="searchDateCondition" compareValue="C">
+		<!-- 완료일 기준 -->
+		SELECT COUNT(*) as totCnt 
+		  FROM ( SELECT A.MODULE_CODE
+		  		   FROM SRMANAGE AS A
+				  WHERE <![CDATA[ DATE_FORMAT(TEST_COMPLETE_DATE, '%Y') = #searchYear# ]]>
+				  	AND A.STATUS = '1006'
+				 	<isNotEmpty prepend="AND" property="pstinstCode">
+						A.PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+				 	<isNotEmpty prepend="AND" property="searchModuleCode">
+						<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+					</isNotEmpty>
+			        GROUP BY A.MODULE_CODE ) AS ALL_LIST
+		</isEqual>
+	</select>
+	
+	
+	<!-- SR 월별 처리현황 엑셀 다운로드 -->
+	<select id="SrMinbyProcessSttusChargeDAO.excelDownSrMinbyProcessSttusChargeReportList" parameterClass="MinbyProcessSttusChargeVO" resultMap="minbyProcessSttusChargeReport">
+		<![CDATA[
+			SELECT
+				CASE
+					A.MODULE_CODE WHEN '9999' THEN '합계'
+					ELSE B.CODE_NM
+				END AS MODULE_NAME,
+				CASE
+					A.MODULE_CODE WHEN '9999' THEN 'Total'
+					ELSE B.CODE_NM_EN
+				END AS MODULE_NAME_EN,
+				CASE 
+					A.MODULE_CODE WHEN '9999' THEN '总计'
+					ELSE B.CODE_NM_CN
+				END AS MODULE_NAME_CN,
+				A.MODULE_CODE AS MODULE_CODE,
+                D.USER_NM AS RNAME,
+				MAX(IF(mon = '1', cnt, 0)) as JAN,
+				MAX(IF(mon = '2', cnt, 0)) as FEB,
+				MAX(IF(mon = '3', cnt, 0)) as MAR,
+				MAX(IF(mon = '4', cnt, 0)) as APR,
+				MAX(IF(mon = '5', cnt, 0)) as MAY,
+				MAX(IF(mon = '6', cnt, 0)) as JUN,
+				MAX(IF(mon = '7', cnt, 0)) as JUL,
+				MAX(IF(mon = '8', cnt, 0)) as AUG,
+				MAX(IF(mon = '9', cnt, 0)) as SEP,
+				MAX(IF(mon = '10', cnt, 0))as `OCT`,
+				MAX(IF(mon = '11', cnt, 0))as NOV,
+				MAX(IF(mon = '12', cnt, 0))as `DEC`,
+				MAX(IF(mon = '합계', cnt, 0))as `TOTAL`,
+				MAX(IF(mon = '1', cnt1, 0)) as JAN1,
+				MAX(IF(mon = '2', cnt1, 0)) as FEB1,
+				MAX(IF(mon = '3', cnt1, 0)) as MAR1,
+				MAX(IF(mon = '4', cnt1, 0)) as APR1,
+				MAX(IF(mon = '5', cnt1, 0)) as MAY1,
+				MAX(IF(mon = '6', cnt1, 0)) as JUN1,
+				MAX(IF(mon = '7', cnt1, 0)) as JUL1,
+				MAX(IF(mon = '8', cnt1, 0)) as AUG1,
+				MAX(IF(mon = '9', cnt1, 0)) as SEP1,
+				MAX(IF(mon = '10', cnt1, 0))as `OCT1`,
+				MAX(IF(mon = '11', cnt1, 0))as NOV1,
+				MAX(IF(mon = '12', cnt1, 0))as `DEC1`,
+				MAX(IF(mon = '합계', cnt, 0))as `TOTAL1`
+			FROM
+				(
+				SELECT 
+						COUNT(MODULE_CODE) AS cnt,
+						SUM(REAL_EXPECT_TIME) AS cnt1,
+						MONTH(TEST_COMPLETE_DATE) AS mon,
+						 MODULE_CODE,
+					RID
+				FROM
+					SRMANAGE
+				WHERE
+					1 = 1
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+					AND YEAR(TEST_COMPLETE_DATE) = #searchYear#]]>
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchModuleCode">
+						<![CDATA[ MODULE_CODE = #searchModuleCode#   ]]>
+					</isNotEmpty>
+				<![CDATA[GROUP by
+					MODULE_CODE,
+						MONTH(TEST_COMPLETE_DATE),
+						RID WITH ROLLUP
+						HAVING MODULE_CODE IS NOT NULL 
+					UNION
+				SELECT 
+						COUNT(MODULE_CODE) AS cnt,
+						SUM(REAL_EXPECT_TIME) AS cnt1,
+						
+						MONTH(TEST_COMPLETE_DATE) AS mon,
+					'9999' AS MODULE_CODE,
+					'합계' AS RID
+				FROM
+					SRMANAGE
+				WHERE
+					1 = 1
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+						AND YEAR(TEST_COMPLETE_DATE) = #searchYear#
+						]]>
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchModuleCode">
+						<![CDATA[ MODULE_CODE = #searchModuleCode#   ]]>
+					</isNotEmpty>
+			<![CDATA[GROUP BY 
+						MONTH(TEST_COMPLETE_DATE)
+					UNION 
+				SELECT 
+						COUNT(MODULE_CODE) AS cnt,
+						SUM(REAL_EXPECT_TIME) AS cnt1,
+						'합계' AS mon,
+						IFNULL(MODULE_CODE,'9999'),
+						CASE
+							 WHEN MODULE_CODE IS NULL THEN '합계'
+							ELSE RID
+						END	AS RID
+				FROM
+					isprintSr.SRMANAGE
+				WHERE
+					1 = 1
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+						AND YEAR(TEST_COMPLETE_DATE) = #searchYear#]]>
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchModuleCode">
+						<![CDATA[ MODULE_CODE = #searchModuleCode#   ]]>
+					</isNotEmpty>
+	<![CDATA[GROUP BY
+						MODULE_CODE , RID WITH ROLLUP 
+					) A
+			LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+					ON
+				A.MODULE_CODE = B.CODE
+				AND CODE_ID = 'SR0003'
+			LEFT OUTER JOIN LETTNEMPLYRINFO D ON D.EMPLYR_ID = A.RID
+			GROUP BY
+				A.RID,
+				A.MODULE_CODE 
+			ORDER BY A.MODULE_CODE ,A.RID ASC;
+		]]>
+	</select>
+</sqlMap>

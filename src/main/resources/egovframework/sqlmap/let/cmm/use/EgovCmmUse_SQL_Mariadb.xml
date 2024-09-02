@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="CmmUse">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="ComDefaultCodeVO" type="egovframework.let.main.service.com.cmm.ComDefaultCodeVO"/>
+
+	<resultMap id="codeDetail" class="egovframework.let.main.service.com.cmm.service.CmmnDetailCode">
+		<result property="codeId"    	column="CODE_ID"   	columnIndex="1"/>
+		<result property="code"  		column="CODE" 		columnIndex="2"/>
+		<result property="codeNm"   	column="CODE_NM"  	columnIndex="3"/>
+		<result property="codeDc"   	column="CODE_DC"  	columnIndex="4"/>
+		<result property="codeNmEn"   	column="CODE_NM_EN"  	columnIndex="5"/>
+		<result property="codeNmCn"   	column="CODE_NM_CN"  	columnIndex="6"/>
+		<result property="userNm"   	column="USER_NM"  	columnIndex="7"/>
+		<result property="userNmEn"   	column="USER_NM_EN"  	columnIndex="8"/>
+	</resultMap>
+	
+	<resultMap id="CmmCodeDetail" class="egovframework.let.main.service.com.cmm.service.CmmnDetailCode">
+		<result property="codeId"    	column="CODE_ID"   	columnIndex="1"/>
+		<result property="code"  		column="CODE" 		columnIndex="2"/>
+		<result property="codeNm"   	column="CODE_NM"  	columnIndex="3"/>
+		<result property="codeDc"   	column="CODE_DC"  	columnIndex="4"/>
+	</resultMap>
+
+	<select id="CmmUseDAO.selectCmmCodeDetail" parameterClass="ComDefaultCodeVO" resultMap="codeDetail">
+		<isEqual prepend="" property="codeId" compareValue="SR0003">
+		SELECT CODE_ID
+			, CODE
+			, CODE_NM  
+			, CODE_DC
+			, CODE_NM_EN  
+			, CODE_NM_CN
+			, C.USER_NM
+			, C.USER_NM_EN
+			FROM 
+			LETTCCMMNDETAILCODE A
+			LEFT OUTER JOIN SRCHARGER B
+			ON A.CODE = B.MODULE_CODE
+			AND B.PSTINST_CODE = #pstinstCode#
+			AND B.MAIN_AT = 'Y'
+			LEFT OUTER JOIN LETTNEMPLYRINFO C
+			ON B.USER_ID = C.EMPLYR_ID 
+			WHERE A.USE_AT = 'Y'
+			AND A.CODE_ID = #codeId#
+			ORDER BY CODE_NM
+		</isEqual>
+		<isNotEqual prepend="" property="codeId" compareValue="SR0003">
+			SELECT 
+			CODE_ID, CODE, CODE_NM, CODE_DC, CODE_NM_EN, CODE_NM_CN, '' AS USER_NM,  '' AS USER_NM_EN
+			FROM 
+			LETTCCMMNDETAILCODE
+			WHERE
+			USE_AT      = 'Y'
+			AND CODE_ID = #codeId#
+			ORDER BY CODE
+		</isNotEqual>
+	</select>
+
+    <select id="CmmUseDAO.selectOgrnztIdDetail" parameterClass="ComDefaultCodeVO" resultMap="CmmCodeDetail">
+            <![CDATA[ 
+            SELECT 
+                #tableNm#     CODE_ID, 
+                ORGNZT_ID     CODE, 
+                ORGNZT_NM     CODE_NM, 
+                ORGNZT_DC     CODE_DC
+            FROM 
+                LETTNORGNZTINFO
+            WHERE 1=1
+            ]]>
+            <isEqual prepend="AND" property="haveDetailCondition" compareValue="Y">
+                ORGNZT_ID  LIKE  #detailConditionValue#
+            </isEqual>
+    </select>
+    
+    <select id="CmmUseDAO.selectGroupIdDetail" parameterClass="ComDefaultCodeVO" resultMap="CmmCodeDetail">
+            <![CDATA[ 
+            SELECT 
+                #tableNm#     CODE_ID, 
+                GROUP_ID     CODE, 
+                GROUP_NM     CODE_NM, 
+                GROUP_DC     CODE_DC
+            FROM 
+                LETTNAUTHORGROUPINFO
+            WHERE 1=1
+            ]]>
+            <isEqual prepend="AND" property="haveDetailCondition" compareValue="Y">
+                GROUP_ID  LIKE  #detailConditionValue#
+            </isEqual>
+    </select>
+    
+    <select id="CmmUseDAO.selectCstmrDetail" parameterClass="ComDefaultCodeVO" resultMap="CmmCodeDetail">
+           SELECT 
+			#codeId# CODE_ID, 
+			EMPLYR_ID CODE, 
+			USER_NM CODE_NM, 
+			USER_NM CODE_DC
+			FROM LETTNEMPLYRINFO
+			WHERE PSTINST_CODE = #codeId#
+			  AND DEL_AT       = 'N'
+    </select>
+    
+    <select id="CmmUseDAO.selectCodeNm" parameterClass="ComDefaultCodeVO" resultClass="String">
+		<![CDATA[ 
+ 			SELECT CODE_NM 
+ 			  FROM LETTCCMMNDETAILCODE 
+ 			 WHERE USE_AT      = 'Y' 
+ 			   AND CODE_ID = #codeId# 
+ 			   AND CODE    = #code#
+ 			   LIMIT 1 
+ 		]]> 
+	</select>
+    
+
+</sqlMap>            
