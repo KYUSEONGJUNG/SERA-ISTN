@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="SrProcessRate">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="ProcessRateVO" type="egovframework.let.sts.prcrt.service.ProcessRateVO"/>
+	
+	
+	<resultMap id="processRateReport" class="egovframework.let.sts.prcrt.service.ProcessRateVO">
+		<result property="moduleName" column="MODULE_NAME"/>
+		<result property="moduleNameEn" column="MODULE_NAME_EN"/>
+		<result property="moduleNameCn" column="MODULE_NAME_CN"/>
+		<result property="srTotalCnt" column="TOTAL_COUNT"/>
+		<result property="signCnt" column="SIGN_COUNT"/>
+		<result property="requestCnt" column="REQUEST_COUNT"/>
+		<result property="resolveCnt" column="RESOLVE_COUNT"/>
+		<result property="testAtCnt" column="TEST_AT_COUNT"/>
+		<result property="completeCnt" column="COMPLETE_COUNT"/>
+		<result property="completeRate" column="COMPLETE_RATE"/>
+		<result property="evalCnt" column="EVAL_COUNT"/>
+		<result property="evalPoint" column="EVAL_POINT"/>
+	</resultMap>
+	
+	
+	<!-- SR처리율 조회 -->
+	<select id="SrProcessRateDAO.selectSrProcessRate" parameterClass="ProcessRateVO" resultClass="egovMap">
+		<!-- 모듈별 처리율 조회 -->
+		SELECT  * 
+		  FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.moduleCode ASC) RNUM, ALL_LIST.*
+		     , CASE 
+				WHEN ALL_LIST.srTotalCnt=0 
+		     		THEN 0 
+		     	ELSE 
+		     		Round(ALL_LIST.completeCnt*100/ALL_LIST.srTotalCnt,2)
+		     	END AS completeRate
+		  FROM  (
+		/* 구현 Sql */
+			SELECT 	MODULE_CODE AS moduleCode
+					,IFNULL(B.CODE_NM,'') AS moduleName
+					,IFNULL(B.CODE_NM_EN,'') AS moduleNameEn
+					,IFNULL(B.CODE_NM_CN,'') AS moduleNameCn
+					,COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END) AS  srTotalCnt
+					,COUNT(CASE STATUS WHEN '1003' THEN 1 END) AS  signCnt
+					,COUNT(CASE STATUS WHEN '1001' THEN 1 END) AS  requestCnt
+					,COUNT(CASE STATUS WHEN '1004' THEN 1 END) AS  resolveCnt
+					,COUNT(CASE STATUS WHEN '1005' THEN 1 END) AS  testAtCnt
+					,COUNT(CASE STATUS WHEN '1006' THEN 1 END) AS  completeCnt
+					,COUNT(CASE WHEN `POINT` > 0 THEN 1 END) AS  evalCnt
+					,ROUND(IFNULL(AVG(`POINT`),0),2) AS evalPoint  
+			  FROM SRMANAGE A
+			  LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+				    ON  B.CODE_ID = 'SR0003' AND B.CODE = A.MODULE_CODE 
+				WHERE 1 = 1
+				AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))  
+			<isNotEmpty prepend="AND" property="pstinstCode">
+				A.PSTINST_CODE = #pstinstCode#
+			</isNotEmpty>
+		 	<isNotEmpty prepend="AND" property="rid">
+				A.RID = #rid#
+			</isNotEmpty>
+	 	 	<isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE, '%Y%m%d') >= #searchDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateT">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE, '%Y%m%d') <= #searchDateT#   ]]>
+			</isNotEmpty>
+				GROUP BY A.MODULE_CODE 
+				UNION
+				SELECT '9999' AS moduleCode
+					    , N'합계' AS moduleName
+					    , N'TOTAL' AS moduleNameEn
+					    , N'总计' AS moduleNameCn
+						,COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END) AS  srTotalCnt
+						,COUNT(CASE STATUS WHEN '1003' THEN 1 END) AS  signCnt
+						,COUNT(CASE STATUS WHEN '1001' THEN 1 END) AS  requestCnt
+						,COUNT(CASE STATUS WHEN '1004' THEN 1 END) AS  resolveCnt
+						,COUNT(CASE STATUS WHEN '1005' THEN 1 END) AS  testAtCnt
+						,COUNT(CASE STATUS WHEN '1006' THEN 1 END) AS  completeCnt
+						,COUNT(CASE WHEN `POINT` > 0 THEN 1 END) AS  evalCnt
+						,ROUND(IFNULL(AVG(`POINT`),0),2) AS evalPoint 
+				FROM 	SRMANAGE A   
+		 		WHERE 1 = 1 
+		 		AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006')) 
+			<isNotEmpty prepend="AND" property="pstinstCode">
+				A.PSTINST_CODE = #pstinstCode#
+			</isNotEmpty>
+		 	<isNotEmpty prepend="AND" property="rid">
+				A.RID = #rid#
+			</isNotEmpty>
+	 	 	<isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE, '%Y%m%d') >= #searchDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateT">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE, '%Y%m%d') <= #searchDateT#   ]]>
+			</isNotEmpty>
+	    <![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+				    ) TA
+		]]>	
+	</select>
+	
+	<!-- SR총 수량을 가져온다. -->
+	<select id="SrProcessRateDAO.selectSrProcessRateTotCnt" parameterClass="ProcessRateVO" resultClass="int">
+
+		SELECT COUNT(*) as totCnt 
+		  FROM ( SELECT A.MODULE_CODE
+		  		   FROM SRMANAGE AS A
+				  WHERE 1 = 1  
+				    AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						A.PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+				 	<isNotEmpty prepend="AND" property="rid">
+						A.RID = #rid#
+					</isNotEmpty>
+			 	 	<isNotEmpty prepend="AND" property="searchDateF">
+						<![CDATA[ DATE_FORMAT( SIGN_DATE, '%Y%m%d') >= #searchDateF#   ]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchDateT">
+						<![CDATA[ DATE_FORMAT( SIGN_DATE, '%Y%m%d') <= #searchDateT#   ]]>
+					</isNotEmpty>
+			 	 	
+			         ) AS ALL_LIST
+	        
+	</select>
+	
+	<!-- SR처리율 엑셀 다운로드 -->
+	<select id="SrProcessRateDAO.excelDownProcessRateReportList" parameterClass="ProcessRateVO" resultMap="processRateReport">
+		<!-- 모듈별 처리율 조회 -->
+		SELECT  * 
+		  FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.MODULE_CODE ASC) RNUM, ALL_LIST.*
+		     , CASE 
+				WHEN ALL_LIST.TOTAL_COUNT=0 
+		     		THEN 0 
+		     	ELSE 
+		     		Round(ALL_LIST.COMPLETE_COUNT*100/ALL_LIST.TOTAL_COUNT,2)
+		     	END AS COMPLETE_RATE
+		  FROM  (
+		/* 구현 Sql */
+			SELECT 	MODULE_CODE 
+					,IFNULL(B.CODE_NM,'') AS MODULE_NAME
+					,IFNULL(B.CODE_NM_EN,'') AS MODULE_NAME_EN
+					,IFNULL(B.CODE_NM_CN,'') AS MODULE_NAME_CN
+					,COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END) AS  TOTAL_COUNT
+					,COUNT(CASE STATUS WHEN '1003' THEN 1 END) AS  SIGN_COUNT
+					,COUNT(CASE STATUS WHEN '1001' THEN 1 END) AS  REQUEST_COUNT
+					,COUNT(CASE STATUS WHEN '1004' THEN 1 END) AS  RESOLVE_COUNT
+					,COUNT(CASE STATUS WHEN '1005' THEN 1 END) AS  TEST_AT_COUNT
+					,COUNT(CASE STATUS WHEN '1006' THEN 1 END) AS  COMPLETE_COUNT
+					,COUNT(CASE WHEN `POINT` > 0 THEN 1 END) AS  EVAL_COUNT
+					,ROUND(IFNULL(AVG(`POINT`),0),2) AS EVAL_POINT 
+			  FROM SRMANAGE A
+			  LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+				    ON  B.CODE_ID = 'SR0003' AND B.CODE = A.MODULE_CODE 
+				WHERE 1 = 1
+				AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))  
+			<isNotEmpty property="pstinstCodeArr" prepend="AND">
+				<![CDATA[
+				 A.PSTINST_CODE
+				]]>
+				<iterate prepend="IN" property="pstinstCodeArr" open="(" close=")" conjunction=",">
+				 #pstinstCodeArr[]#
+				</iterate>
+			</isNotEmpty>
+	   		<isEmpty property="pstinstCodeArr">
+	   			<isNotEmpty prepend="AND" property="pstinstCode">
+					A.PSTINST_CODE = #pstinstCode#
+				</isNotEmpty>
+	   		</isEmpty>
+		 	<isNotEmpty prepend="AND" property="rid">
+				A.RID = #rid#
+			</isNotEmpty>
+	 	 	<isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE, '%Y%m%d') >= #searchDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateT">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE, '%Y%m%d') <= #searchDateT#   ]]>
+			</isNotEmpty>
+				GROUP BY A.MODULE_CODE 
+				UNION
+				SELECT '9999' AS MODULE_CODE
+					    , N'합계' AS MODULE_NAME
+					    , N'TOTAL' AS MODULE_NAME_EN
+					    , N'总计' AS MODULE_NAME_CN 
+						,COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END) AS  TOTAL_COUNT
+						,COUNT(CASE STATUS WHEN '1003' THEN 1 END) AS  SIGN_COUNT
+						,COUNT(CASE STATUS WHEN '1001' THEN 1 END) AS  REQUEST_COUNT
+						,COUNT(CASE STATUS WHEN '1004' THEN 1 END) AS  RESOLVE_COUNT
+						,COUNT(CASE STATUS WHEN '1005' THEN 1 END) AS  TEST_AT_COUNT
+						,COUNT(CASE STATUS WHEN '1006' THEN 1 END) AS  COMPLETE_COUNT
+						,COUNT(CASE WHEN `POINT` > 0 THEN 1 END) AS  EVAL_COUNT
+						,ROUND(IFNULL(AVG(`POINT`),0),2) AS EVAL_POINT  
+				FROM 	SRMANAGE A   
+		 		WHERE 1 = 1
+		 		AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))  
+				<isNotEmpty property="pstinstCodeArr" prepend="AND">
+					<![CDATA[
+					 A.PSTINST_CODE
+					]]>
+					<iterate prepend="IN" property="pstinstCodeArr" open="(" close=")" conjunction=",">
+					 #pstinstCodeArr[]#
+					</iterate>
+				</isNotEmpty>
+		   		<isEmpty property="pstinstCodeArr">
+		   			<isNotEmpty prepend="AND" property="pstinstCode">
+						A.PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+		   		</isEmpty>
+		 	<isNotEmpty prepend="AND" property="rid">
+				A.RID = #rid#
+			</isNotEmpty>
+	 	 	<isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE, '%Y%m%d') >= #searchDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateT">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE, '%Y%m%d') <= #searchDateT#   ]]>
+			</isNotEmpty>
+	    <![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+				    ) TA
+		]]>	
+	</select>
+	
+</sqlMap>

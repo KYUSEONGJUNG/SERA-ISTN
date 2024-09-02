@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="SrMinbyProcessSttus">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="MinbyProcessSttusVO" type="egovframework.let.sts.mprcsts.service.MinbyProcessSttusVO"/>
+
+	<resultMap id="minbyProcessSttusReport" class="egovframework.let.sts.mprcsts.service.MinbyProcessSttusVO">
+		<result property="moduleCode" column="MODULE_CODE"/>
+		<result property="moduleName" column="MODULE_NAME"/>
+		<result property="moduleNameEn" column="MODULE_NAME_EN"/>
+		<result property="moduleNameCn" column="MODULE_NAME_CN"/>
+		<result property="jan" column="JAN"/>
+		<result property="feb" column="FEB"/>
+		<result property="mar" column="MAR"/>
+		<result property="apr" column="APR"/>
+		<result property="may" column="MAY"/>
+		<result property="jun" column="JUN"/>
+		<result property="jul" column="JUL"/>
+		<result property="aug" column="AUG"/>
+		<result property="sep" column="SEP"/>
+		<result property="oct" column="OCT"/>
+		<result property="nov" column="NOV"/>
+		<result property="dec" column="DEC"/>
+	</resultMap>
+		
+	<!-- SR처리율 조회 -->
+	<select id="SrMinbyProcessSttusDAO.selectSrMinbyProcessSttus" parameterClass="MinbyProcessSttusVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT
+				CASE
+					A.MODULE_CODE WHEN '9999' THEN '합계'
+					ELSE B.CODE_NM
+				END AS moduleName,
+				CASE
+					A.MODULE_CODE WHEN '9999' THEN 'Total'
+					ELSE B.CODE_NM_EN
+				END AS moduleNameEn,
+				CASE 
+					A.MODULE_CODE WHEN '9999' THEN '总计'
+					ELSE B.CODE_NM_CN
+				END AS moduleNameCn,
+				A.MODULE_CODE AS moduleCode,
+				MAX(IF(mon = '1', cnt, 0)) as jan,
+				MAX(IF(mon = '2', cnt, 0)) as feb,
+				MAX(IF(mon = '3', cnt, 0)) as mar,
+				MAX(IF(mon = '4', cnt, 0)) as apr,
+				MAX(IF(mon = '5', cnt, 0)) as may,
+				MAX(IF(mon = '6', cnt, 0)) as jun,
+				MAX(IF(mon = '7', cnt, 0)) as jul,
+				MAX(IF(mon = '8', cnt, 0)) as aug,
+				MAX(IF(mon = '9', cnt, 0)) as sep,
+				MAX(IF(mon = '10', cnt, 0))as `oct`,
+				MAX(IF(mon = '11', cnt, 0))as nov,
+				MAX(IF(mon = '12', cnt, 0))as `dec`
+			FROM
+				(
+				SELECT ]]>
+					<isEqual property="searchCountCondition" compareValue="C"> 
+						COUNT(MODULE_CODE) AS cnt,
+					</isEqual>
+					<isEqual property="searchCountCondition" compareValue="T"> 
+						SUM(REAL_EXPECT_TIME) AS cnt,
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="R">
+						MONTH(SIGN_DATE) AS mon,
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="C">
+						MONTH(TEST_COMPLETE_DATE) AS mon,
+					</isEqual> 
+					<![CDATA[ MODULE_CODE
+				FROM
+					SRMANAGE
+				WHERE
+					1 = 1
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+					AND YEAR(SIGN_DATE) = #searchYear#]]>
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+				<![CDATA[GROUP by
+					MODULE_CODE,]]>
+					<isEqual property="searchDateCondition" compareValue="R">
+						MONTH(SIGN_DATE)
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="C">
+						MONTH(TEST_COMPLETE_DATE)
+					</isEqual> 
+	<![CDATA[UNION
+				SELECT ]]>
+					<isEqual property="searchCountCondition" compareValue="C"> 
+						COUNT(MODULE_CODE) AS cnt,
+					</isEqual>
+					<isEqual property="searchCountCondition" compareValue="T"> 
+						SUM(REAL_EXPECT_TIME) AS cnt,
+					</isEqual> 
+					<isEqual property="searchDateCondition" compareValue="R">
+						MONTH(SIGN_DATE) AS mon,
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="C">
+						MONTH(TEST_COMPLETE_DATE) AS mon,
+					</isEqual>  
+					<![CDATA['9999' AS MODULE_CODE
+				FROM
+					SRMANAGE
+				WHERE
+					1 = 1]]>
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+					<isEqual property="searchDateCondition" compareValue="R">
+						AND YEAR(SIGN_DATE) = #searchYear#
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="C">
+						AND YEAR(TEST_COMPLETE_DATE) = #searchYear#
+					</isEqual>
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+	<![CDATA[GROUP BY ]]>
+					<isEqual property="searchDateCondition" compareValue="R">
+						MONTH(SIGN_DATE)
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="C">
+						MONTH(TEST_COMPLETE_DATE)
+					</isEqual>	
+			<![CDATA[) A
+			LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+					ON
+				A.MODULE_CODE = B.CODE
+				AND CODE_ID = 'SR0003'
+			GROUP BY
+				A.MODULE_CODE;
+		]]>
+	</select>
+	
+	<!-- SR총 수량을 가져온다. -->
+	<select id="SrMinbyProcessSttusDAO.selectSrMinbyProcessSttusTotCnt" parameterClass="MinbyProcessSttusVO" resultClass="int">
+		<isEqual property="searchDateCondition" compareValue="R">
+		<!-- 요청일 기준 -->
+		SELECT COUNT(*) as totCnt 
+		  FROM ( SELECT A.MODULE_CODE
+		  		   FROM SRMANAGE AS A
+				  WHERE <![CDATA[ DATE_FORMAT(`SIGN_DATE`, '%Y') = #searchYear# ]]>
+				    AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+				 	<isNotEmpty prepend="AND" property="pstinstCode">
+						A.PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+				 	
+			        GROUP BY A.MODULE_CODE ) AS ALL_LIST
+		</isEqual>
+		
+		<isEqual property="searchDateCondition" compareValue="C">
+		<!-- 완료일 기준 -->
+		SELECT COUNT(*) as totCnt 
+		  FROM ( SELECT A.MODULE_CODE
+		  		   FROM SRMANAGE AS A
+				  WHERE <![CDATA[ DATE_FORMAT(TEST_COMPLETE_DATE, '%Y') = #searchYear# ]]>
+				  	AND A.STATUS = '1006'
+				 	<isNotEmpty prepend="AND" property="pstinstCode">
+						A.PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+				 	
+			        GROUP BY A.MODULE_CODE ) AS ALL_LIST
+		</isEqual>
+	</select>
+	
+	
+	<!-- SR 월별 처리현황 엑셀 다운로드 -->
+	<select id="SrMinbyProcessSttusDAO.excelDownSrMinbyProcessSttusReportList" parameterClass="MinbyProcessSttusVO" resultMap="minbyProcessSttusReport">
+		<![CDATA[
+			SELECT
+				CASE
+					A.MODULE_CODE WHEN '9999' THEN '합계'
+					ELSE B.CODE_NM
+				END AS MODULE_NAME,
+				CASE
+					A.MODULE_CODE WHEN '9999' THEN 'Total'
+					ELSE B.CODE_NM_EN
+				END AS MODULE_NAME_EN,
+				CASE 
+					A.MODULE_CODE WHEN '9999' THEN '总计'
+					ELSE B.CODE_NM_CN
+				END AS MODULE_NAME_CN,
+				A.MODULE_CODE AS MODULE_CODE,
+				MAX(IF(mon = '1', cnt, 0)) as JAN,
+				MAX(IF(mon = '2', cnt, 0)) as FEB,
+				MAX(IF(mon = '3', cnt, 0)) as MAR,
+				MAX(IF(mon = '4', cnt, 0)) as APR,
+				MAX(IF(mon = '5', cnt, 0)) as MAY,
+				MAX(IF(mon = '6', cnt, 0)) as JUN,
+				MAX(IF(mon = '7', cnt, 0)) as JUL,
+				MAX(IF(mon = '8', cnt, 0)) as AUG,
+				MAX(IF(mon = '9', cnt, 0)) as SEP,
+				MAX(IF(mon = '10', cnt, 0))as `OCT`,
+				MAX(IF(mon = '11', cnt, 0))as NOV,
+				MAX(IF(mon = '12', cnt, 0))as `DEC`
+			FROM
+				(
+				SELECT ]]>
+					<isEqual property="searchCountCondition" compareValue="C"> 
+						COUNT(MODULE_CODE) AS cnt,
+					</isEqual>
+					<isEqual property="searchCountCondition" compareValue="T"> 
+						SUM(REAL_EXPECT_TIME) AS cnt,
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="R">
+						MONTH(SIGN_DATE) AS mon,
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="C">
+						MONTH(TEST_COMPLETE_DATE) AS mon,
+					</isEqual> 
+					<![CDATA[ MODULE_CODE
+				FROM
+					SRMANAGE
+				WHERE
+					1 = 1
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+					AND YEAR(SIGN_DATE) = #searchYear#]]>
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+				<![CDATA[GROUP by
+					MODULE_CODE,]]>
+					<isEqual property="searchDateCondition" compareValue="R">
+						MONTH(SIGN_DATE)
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="C">
+						MONTH(TEST_COMPLETE_DATE)
+					</isEqual> 
+	<![CDATA[UNION
+				SELECT ]]>
+					<isEqual property="searchCountCondition" compareValue="C"> 
+						COUNT(MODULE_CODE) AS cnt,
+					</isEqual>
+					<isEqual property="searchCountCondition" compareValue="T"> 
+						SUM(REAL_EXPECT_TIME) AS cnt,
+					</isEqual> 
+					<isEqual property="searchDateCondition" compareValue="R">
+						MONTH(SIGN_DATE) AS mon,
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="C">
+						MONTH(TEST_COMPLETE_DATE) AS mon,
+					</isEqual>  
+					<![CDATA['9999' AS MODULE_CODE
+				FROM
+					SRMANAGE
+				WHERE
+					1 = 1]]>
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+					<isEqual property="searchDateCondition" compareValue="R">
+						AND YEAR(SIGN_DATE) = #searchYear#
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="C">
+						AND YEAR(TEST_COMPLETE_DATE) = #searchYear#
+					</isEqual>
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+	<![CDATA[GROUP BY ]]>
+					<isEqual property="searchDateCondition" compareValue="R">
+						MONTH(SIGN_DATE)
+					</isEqual>
+					<isEqual property="searchDateCondition" compareValue="C">
+						MONTH(TEST_COMPLETE_DATE)
+					</isEqual>	
+			<![CDATA[) A
+			LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+					ON
+				A.MODULE_CODE = B.CODE
+				AND CODE_ID = 'SR0003'
+			GROUP BY
+				A.MODULE_CODE;
+		]]>
+	</select>
+</sqlMap>

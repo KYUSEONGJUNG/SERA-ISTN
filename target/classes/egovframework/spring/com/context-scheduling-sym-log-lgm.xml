@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+
+	<!-- 시스템 로그 요약  
+	<bean id="sysLogging"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="egovSysLogScheduling" />
+		<property name="targetMethod" value="sysLogSummary" />
+		<property name="concurrent" value="false" />
+	</bean>
+	-->
+	<!-- SR 이메일 로그 -->
+	<bean id="sysLogging"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="egovSysLogScheduling" />
+		<property name="targetMethod" value="sysEmailLog" />
+		<property name="concurrent" value="false" />
+	</bean>
+	 
+	<!-- 시스템 로그 요약  트리거
+	<bean id="sysLogTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+		<property name="jobDetail" ref="sysLogging" />
+		<property name="startDelay" value="300000" />
+		<property name="repeatInterval" value="300000" />
+	</bean>
+	-->
+
+
+	<bean id="sysLogTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
+		<property name="jobDetail" ref="sysLogging" />
+		<property name="startDelay" value="120000" />
+		<property name="repeatInterval" value="300000" />
+	</bean>
+
+	
+	
+	<!-- 시스템 로그 요약 스케줄러 -->
+	<bean id="sysLogScheduler"
+		class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref bean="sysLogTrigger" />
+			</list>
+		</property>
+	</bean>
+
+</beans>

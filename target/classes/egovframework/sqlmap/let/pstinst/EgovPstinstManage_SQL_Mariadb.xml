@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="PstinstManage">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="Pstinst"     type="egovframework.let.pstinst.service.Pstinst"/>
+	<typeAlias  alias="PstinstVO"   type="egovframework.let.pstinst.service.PstinstVO"/>
+	<typeAlias  alias="SrchargerVO"   type="egovframework.let.pstinst.service.SrchargerVO"/>
+	<typeAlias  alias="SrconnectVO"   type="egovframework.let.pstinst.service.SrconnectVO"/>
+
+	<select id="PstinstManageDAO.selectPstinstList" parameterClass="PstinstVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT  * 
+			  FROM  (
+			SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.CREATE_DATE DESC) RNUM, ALL_LIST.* 
+			  FROM  (
+			/* 구현 Sql */
+			SELECT  PSTINST_CODE
+			      ,  PSTINST_ABRV
+			      ,  JOB_CODE
+			      ,  NAME
+			      ,  ENAME
+			      ,  ZIP_CODE
+			      ,  ADDRESS1
+			      ,  ADDRESS2
+			      ,  TEL
+			      ,  FAX
+			      ,  NOTE
+			      ,  SETTLE_AT
+			      ,  CONTRACT_TIME
+			      ,  CONTRACT_KIND
+			      ,  DEL_AT
+			      ,  CREATE_DATE
+			      ,  EDIT_DATE
+			      ,  CREATOR_ID
+			      ,  EDITOR_ID 
+			  FROM  SRCOMPANY
+			 WHERE	1 = 1
+		]]>
+			<isNotEmpty prepend="AND" property="searchPstinstCode">
+				<![CDATA[ PSTINST_CODE = #searchPstinstCode#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDelAt">
+				<![CDATA[ DEL_AT = #searchDelAt# ]]>
+			</isNotEmpty>
+		<![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+				    ) TA
+			 WHERE  RNUM  > #firstIndex#
+			   AND  RNUM <= #firstIndex# + #recordCountPerPage#
+		]]>
+	</select>
+
+	<select id="PstinstManageDAO.selectPstinstListTotCnt" parameterClass="PstinstVO" resultClass="int">
+		<![CDATA[
+			SELECT  COUNT(*) totcnt 
+			  FROM  SRCOMPANY
+			 WHERE	1 = 1
+		]]>
+			<isNotEmpty prepend="AND" property="searchPstinstCode">
+				<![CDATA[ PSTINST_CODE = #searchPstinstCode#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDelAt">
+				<![CDATA[ DEL_AT = #searchDelAt# ]]>
+			</isNotEmpty>
+	</select>
+	
+	<select id="PstinstManageDAO.selectPstinstAllList" parameterClass="PstinstVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT  RTRIM(PSTINST_CODE) AS pstinstCode
+			      , NAME AS pstinstNm
+			  FROM  SRCOMPANY
+				WHERE DEL_AT = 'N'
+			 ORDER BY NAME
+		]]>
+	</select>
+	
+		<select id="PstinstManageDAO.selectPstinstAllList2" parameterClass="PstinstVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT  RTRIM(PSTINST_CODE) AS pstinstCode
+			      , NAME AS pstinstNm
+			  FROM  SRCOMPANY
+		
+			 ORDER BY NAME
+		]]>
+	</select>
+	
+	<select id="PstinstManageDAO.selectPopupPstinstList" parameterClass="PstinstVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT  * 
+			  FROM  (
+			SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.CREATE_DATE DESC) RNUM, ALL_LIST.* 
+			  FROM  (
+			/* 구현 Sql */
+			SELECT  PSTINST_CODE
+			      ,  PSTINST_ABRV
+			      ,  JOB_CODE
+			      ,  NAME
+			      ,  ENAME
+			      ,  ZIP_CODE
+			      ,  ADDRESS1
+			      ,  ADDRESS2
+			      ,  TEL
+			      ,  FAX
+			      ,  NOTE
+			      ,  SETTLE_AT
+			      ,  CONTRACT_TIME
+			      ,  CONTRACT_KIND
+			      ,  DEL_AT
+			      ,  CREATE_DATE
+			      ,  EDIT_DATE
+			      ,  CREATOR_ID
+			      ,  EDITOR_ID 
+			  FROM  SRCOMPANY
+			 WHERE	1 = 1
+		]]>
+			<isNotEmpty prepend="AND" property="searchPstinstNm">
+				<![CDATA[ CONCAT( '%' , #searchPstinstNm# , '%') ]]>  
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDelAt">
+				<![CDATA[ DEL_AT = #searchDelAt# ]]>
+			</isNotEmpty>
+		<![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+				    ) TA
+			 WHERE  RNUM  > #firstIndex#
+			   AND  RNUM <= #firstIndex# + #recordCountPerPage#
+		]]>
+	</select>
+
+	<select id="PstinstManageDAO.selectPopupPstinstListTotCnt" parameterClass="PstinstVO" resultClass="int">
+		<![CDATA[
+			SELECT  COUNT(*) totcnt 
+			  FROM  SRCOMPANY
+			 WHERE	1 = 1
+		]]>
+			<isNotEmpty prepend="AND" property="searchPstinstNm">
+				<![CDATA[ NAME LIKE '%' + #searchPstinstNm# + '%' ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDelAt">
+				<![CDATA[ DEL_AT = #searchDelAt# ]]>
+			</isNotEmpty>
+	</select>
+
+
+	<select id="PstinstManageDAO.selectPstinstDetail" parameterClass="Pstinst" resultClass="Pstinst">
+		<![CDATA[
+			SELECT PSTINST_CODE  pstinstCode  
+				,  PSTINST_ABRV  pstinstAbrv
+				,  JOB_CODE      jobCode      
+				,  NAME          name         
+				,  ENAME         ename        
+				,  ZIP_CODE      zipCode      
+				,  ADDRESS1      address1     
+				,  ADDRESS2      address2     
+				,  TEL           tel          
+				,  FAX           fax          
+				,  NOTE          note         
+				,  SETTLE_AT     settleAt     
+				,  CONTRACT_TIME contractTime 
+				,  CONTRACT_KIND contractKind 
+				,  DEL_AT        delAt        
+				,  DATE_FORMAT(CREATE_DATE, '%Y-%m-%d') as createDate   
+				,  DATE_FORMAT(EDIT_DATE, '%Y-%m-%d') as editDate     
+				,  CREATOR_ID    creatorId    
+				,  EDITOR_ID     editorId     
+				,  CONNMETHOD_CODE connMethodCode
+				,  VPNURL		 vpnUrl
+				,  VPNADDR	  	 vpnAddr
+				,  VPNPORT		 vpnPort
+				,  VPNID		 vpnId
+				,  VPNPASSWD	 vpnPasswd
+				,  OTP			 otp
+				,  REMARK	 	 remark
+				,  SOLMAN		 solman
+				,  FILE_ID		 fileId
+			  FROM SRCOMPANY			     
+		]]>
+		<isNotEmpty prepend="WHERE" property="pstinstCode">
+			<![CDATA[ PSTINST_CODE = #pstinstCode# ]]>
+		</isNotEmpty>
+	</select>
+
+	<insert id="PstinstManageDAO.insertPstinst">
+		<selectKey resultClass="String" keyProperty="pstinstCode">
+			SELECT  IFNULL(MAX(PSTINST_CODE)+1,1)	pstinstCode
+			  FROM  SRCOMPANY
+	    </selectKey>
+
+		<![CDATA[
+			INSERT
+			  INTO  SRCOMPANY
+			     (  PSTINST_CODE
+			      ,  PSTINST_ABRV
+			      ,  JOB_CODE
+			      ,  NAME
+			      ,  ENAME
+			      ,  ZIP_CODE
+			      ,  ADDRESS1
+			      ,  ADDRESS2
+			      ,  TEL
+			      ,  FAX
+			      ,  NOTE
+			      ,  SETTLE_AT
+			      ,  CONTRACT_TIME
+			      ,  CONTRACT_KIND
+			      ,  DEL_AT
+			      ,  CREATE_DATE
+			      ,  CREATOR_ID
+			      ,  CONNMETHOD_CODE   
+				  ,  VPNURL	
+				  ,  VPNADDR
+				  ,  VPNPORT
+				  ,  VPNID
+				  ,  VPNPASSWD
+				  ,  OTP
+				  ,  REMARK
+				  ,  SOLMAN
+				  ,  FILE_ID
+			     ) 
+			VALUES
+			     (  #pstinstCode#
+					, #pstinstAbrv#
+					, #jobCode#
+					, #name#
+					, #ename#
+					, #zipCode#
+					, #address1#
+					, #address2#
+					, #tel#
+					, #fax#
+					, #note#
+					, #settleAt#
+					, #contractTime#
+					, #contractKind#
+					, #delAt#
+					, SYSDATE()
+					, #creatorId#
+					, #connMethodCode#
+					, #vpnUrl#
+					, #vpnAddr#
+					, #vpnPort#
+					, #vpnId#
+					, #vpnPasswd#
+					, #otp#
+					, #remark#
+					, #solman#
+					, #fileId#
+			     )
+		]]>
+	</insert>
+
+	<update id="PstinstManageDAO.updatePstinst">
+		<![CDATA[
+            UPDATE  SRCOMPANY 
+               SET PSTINST_ABRV     = #pstinstAbrv#
+                ,  JOB_CODE         = #jobCode#    
+				,  NAME             = #name#        
+				,  ENAME            = #ename#       
+				,  ZIP_CODE         = #zipCode#     
+				,  ADDRESS1         = #address1#    
+				,  ADDRESS2         = #address2#    
+				,  TEL              = #tel#         
+				,  FAX              = #fax#         
+				,  NOTE             = #note#        
+				,  SETTLE_AT        = #settleAt#    
+				,  CONTRACT_TIME    = #contractTime#
+				,  CONTRACT_KIND    = #contractKind#
+				,  DEL_AT           = #delAt#       
+				,  EDIT_DATE        = SYSDATE()
+				,  EDITOR_ID        = #editorId#  
+				,  CONNMETHOD_CODE  = #connMethodCode#
+				,  VPNURL			= #vpnUrl#
+				,  VPNADDR			= #vpnAddr#
+				,  VPNPORT			= #vpnPort#
+				,  VPNID			= #vpnId#
+				,  VPNPASSWD		= #vpnPasswd#
+				,  OTP				= #otp#
+				,  REMARK			= #remark#
+				,  SOLMAN			= #solman#
+				,  FILE_ID			= #fileId#
+             WHERE  PSTINST_CODE      = #pstinstCode#
+		]]>
+	</update>
+
+	<delete id="PstinstManageDAO.deletePstinst">
+		<![CDATA[
+            DELETE  
+              FROM  SRCOMPANY     
+             WHERE  PSTINST_CODE = #pstinstCode# 
+		]]>
+	</delete>
+	
+	<select id="PstinstManageDAO.selectSrchargerList" parameterClass="SrchargerVO" resultClass="egovMap">
+		<![CDATA[
+			 SELECT BASE.PSTINST_CODE, BASE.MODULE_CODE, 
+					BASE.USER_ID_A, D.EMAIL_ADRES AS EMAIL_ADRES_A, D.MBTLNUM AS MBTLNUM_A,
+					BASE.USER_ID_B, E.EMAIL_ADRES AS EMAIL_ADRES_B, E.MBTLNUM AS MBTLNUM_B
+					FROM (
+					SELECT DISTINCT 
+					       A.PSTINST_CODE
+					      ,A.MODULE_CODE
+					      ,(SELECT USER_ID FROM SRCHARGER B WHERE A.PSTINST_CODE = B.PSTINST_CODE AND A.MODULE_CODE = B.MODULE_CODE AND B.MAIN_AT = 'Y') USER_ID_A       
+					      ,(SELECT USER_ID FROM SRCHARGER C WHERE A.PSTINST_CODE = C.PSTINST_CODE AND A.MODULE_CODE = C.MODULE_CODE AND C.MAIN_AT = 'N') USER_ID_B       
+					  FROM SRCHARGER A
+					 WHERE A.PSTINST_CODE = #pstinstCode#
+					) BASE
+					LEFT OUTER JOIN LETTNEMPLYRINFO D ON BASE.USER_ID_A = D.EMPLYR_ID
+					LEFT OUTER JOIN LETTNEMPLYRINFO E ON BASE.USER_ID_B = E.EMPLYR_ID
+			ORDER BY BASE.MODULE_CODE
+		]]>
+	</select>
+
+	<select id="PstinstManageDAO.selectCooperchargerList" parameterClass="SrchargerVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT DISTINCT PSTINST_CODE, MODULE_CODE
+			  FROM SRCHARGER
+			 WHERE USER_ID = #userId#
+			   and MAIN_AT = 'Y'
+		]]>
+	</select>
+
+
+	<select id="PstinstManageDAO.selectSrconnectList" parameterClass="SrconnectVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT PSTINST_CODE  pstinstCode  
+				 , NAMEDETAIL	 nameDetail
+				 , TYPE_CODE	 typeCode
+				 , SID			 sid
+				 , INS 			 ins
+				 , IPADDR		 ipAddr
+				 , SAPID		 sapId
+				 , SAPPASSWD	 sapPasswd
+				 , CLIENT		 client  
+			  FROM SRCONNECT			     
+		]]>
+		<isNotEmpty prepend="WHERE" property="pstinstCode">
+			<![CDATA[ PSTINST_CODE = #pstinstCode# ]]>
+		</isNotEmpty>
+	</select>
+	
+	<delete id="PstinstManageDAO.deleteSrcharger">
+		<![CDATA[
+            DELETE  
+              FROM  SRCHARGER     
+             WHERE  PSTINST_CODE = #pstinstCode# 
+		]]>
+	</delete>
+	
+	<delete id="PstinstManageDAO.deleteSrconnect">
+		<![CDATA[
+            DELETE  
+              FROM  SRCONNECT     
+             WHERE  PSTINST_CODE = #pstinstCode# 
+		]]>
+	</delete>
+	
+	<insert id="PstinstManageDAO.insertSrcharger">
+		<![CDATA[
+			INSERT 
+			  INTO SRCHARGER 
+			      (
+			       PSTINST_CODE
+			      ,MODULE_CODE
+			      ,MAIN_AT
+			      ,USER_ID
+			      ,CREATE_DATE
+			      ,EDIT_DATE
+			      ,CREATOR_ID
+			      ,EDITOR_ID
+			     ) 
+			VALUES
+			     (  #pstinstCode#
+					, #moduleCode#
+					, #mainAt#
+					, #userId#
+					, SYSDATE()
+					, SYSDATE()
+					, #creatorId#
+					, #editorId#
+			     ) 
+		]]>
+	</insert>
+
+	<insert id="PstinstManageDAO.insertSrconnect">
+		<![CDATA[
+			INSERT 
+			  INTO SRCONNECT 
+			      (
+			       PSTINST_CODE
+			      ,NAMEDETAIL
+			      ,TYPE_CODE
+			      ,SID
+			      ,INS
+			      ,IPADDR
+			      ,SAPID
+			      ,SAPPASSWD
+			      ,CLIENT
+			     ) 
+			VALUES
+			     (  #pstinstCode#
+				  , #nameDetail#
+			      , #typeCode#
+			      ,	#sid#
+			      ,	#ins#
+			      , #ipAddr#
+			      , #sapId#
+			      , #sapPasswd#
+			      , #client#
+			     ) 
+		]]>
+	</insert>
+	
+	<insert id="PstinstManageDAO.insertSrconnectNew">
+		
+		<![CDATA[
+			INSERT 
+			  INTO SRCONNECT 
+			      (
+			       PSTINST_CODE
+			      ,NAMEDETAIL
+			      ,TYPE_CODE
+			      ,SID
+			      ,INS
+			      ,IPADDR
+			      ,SAPID
+			      ,SAPPASSWD
+			      ,CLIENT
+			     ) 
+			VALUES
+			     (  #pstinstCode#
+				  , #nameDetail#
+			      , #typeCode#
+			      ,	#sid#
+			      ,	#ins#
+			      , #ipAddr#
+			      , #sapId#
+			      , #sapPasswd#
+			      , #client#
+			     ) 
+		]]>
+	</insert>
+	
+	<select id="PstinstManageDAO.strPstinstAbrb" parameterClass="PstinstVO" resultClass="String">
+		<![CDATA[
+    	SELECT PSTINST_CODE  pstinstCode
+		  FROM SRCOMPANY			     
+         WHERE PSTINST_CODE = #pstinstCode#
+		]]>
+	</select>
+
+	<select id="PstinstManageDAO.selectChargerPstinstList" parameterClass="SrchargerVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT A.USER_ID as userId, C.USER_NM as userName, A.PSTINST_CODE as pstinstCode, B.NAME as pstinstName, 
+				   A.MODULE_CODE as moduleCode, D.CODE_NM as moduleName, A.MAIN_AT as mainAt
+			FROM SRCHARGER as A
+			INNER JOIN SRCOMPANY AS B
+					ON A.PSTINST_CODE = B.PSTINST_CODE
+			LEFT OUTER JOIN LETTNEMPLYRINFO AS C
+					ON A.USER_ID = C.EMPLYR_ID
+			LEFT OUTER JOIN LETTCCMMNDETAILCODE AS D
+					ON D.CODE_ID = 'SR0003'
+					AND A.MODULE_CODE = D.CODE
+			WHERE B.DEL_AT = 'N'
+			ORDER BY userName
+		]]>
+	</select>
+</sqlMap>            

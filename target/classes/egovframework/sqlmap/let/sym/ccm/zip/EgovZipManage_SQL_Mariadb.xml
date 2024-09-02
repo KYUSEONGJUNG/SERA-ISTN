@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="ZipManage">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="Zip"     type="egovframework.let.sym.ccm.zip.service.Zip"/>
+	<typeAlias  alias="ZipVO"   type="egovframework.let.sym.ccm.zip.service.ZipVO"/>
+
+	<select id="ZipManageDAO.selectZipList" parameterClass="ZipVO" resultClass="egovMap">
+		<![CDATA[
+			SELECT  * 
+			  FROM  (
+			SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.ZIP ASC) RNUM, ALL_LIST.* 
+			  FROM  (
+			/* 구현 Sql */
+			SELECT  ZIP
+			     ,  SN
+			     ,  CTPRVN_NM
+			     ,  SIGNGU_NM
+			     ,  EMD_NM
+			     ,  LI_BULD_NM
+			     ,  LOAD_NM
+			     ,  LNBR_DONG_HO
+			     ,  LI_BULD_NM_OLD
+			     ,  LNBR_DONG_HO_OLD
+			     ,  CTPRVN_NM +' '+ SIGNGU_NM +' '+ EMD_NM +' '+ LI_BULD_NM +' '+ LOAD_NM +' '+ LNBR_DONG_HO
+			        + CASE WHEN LNBR_DONG_HO_OLD != '' AND LI_BULD_NM_OLD != ''
+			                THEN '(' +LNBR_DONG_HO_OLD+ ', ' +LI_BULD_NM_OLD+ ')'
+			               WHEN LNBR_DONG_HO_OLD != '' AND LI_BULD_NM_OLD = ''
+			                THEN '(' +LNBR_DONG_HO_OLD+ ')'
+			               WHEN LNBR_DONG_HO_OLD = '' AND LI_BULD_NM_OLD != ''
+			                THEN '(' +LI_BULD_NM_OLD+ ')'
+			               ELSE '' 
+			          END AS ADDRESS  
+			  FROM  LETTCZIP
+			 WHERE	1 = 1
+		]]>
+			<isNotEmpty prepend="AND" property="searchZip">
+				<![CDATA[ ZIP like  '%' + #searchZip# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCtprvnNm">
+				<![CDATA[ CTPRVN_NM like  '%' + #searchCtprvnNm# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchSignguNm">
+				<![CDATA[ SIGNGU_NM like  '%' + #searchSignguNm# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchEmdNm">
+				<![CDATA[ EMD_NM like  '%' + #searchEmdNm# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchLiBuldNm">
+				<![CDATA[ LI_BULD_NM like  '%' + #searchLiBuldNm# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchLoadNm">
+				<![CDATA[ LOAD_NM like  '%' + #searchLoadNm# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchLnbrDongHo">
+				<![CDATA[ LNBR_DONG_HO like  '%' + #searchLnbrDongHo# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchLiBuldNmOld">
+				<![CDATA[ LI_BULD_NM_OLD like  '%' + #searchLiBuldNmOld# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchLnbrDongHoOld">
+				<![CDATA[ LNBR_DONG_HO_OLD like  '%' + #searchLnbrDongHoOld# + '%'   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="searchKeyword">
+				<![CDATA[      CTPRVN_NM        LIKE  '%' + #searchKeyword# + '%'
+							OR SIGNGU_NM        LIKE  '%' + #searchKeyword# + '%'
+							OR EMD_NM           LIKE  '%' + #searchKeyword# + '%'
+							OR LI_BULD_NM       LIKE  '%' + #searchKeyword# + '%'
+							OR LOAD_NM          LIKE  '%' + #searchKeyword# + '%'
+							OR LI_BULD_NM_OLD   LIKE  '%' + #searchKeyword# + '%'
+							OR LNBR_DONG_HO_OLD LIKE  '%' + #searchKeyword# + '%'   ]]>
+			</isNotEmpty>
+				
+		<![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+				    ) TA
+			 WHERE  RNUM  > #firstIndex#
+			   AND  RNUM <= #firstIndex# + #recordCountPerPage#
+		]]>
+	</select>
+
+	<select id="ZipManageDAO.selectZipListTotCnt" parameterClass="ZipVO" resultClass="int">
+		<![CDATA[
+			SELECT  COUNT(*) totcnt 
+			  FROM  LETTCZIP
+			 WHERE	1 = 1
+		]]>
+			<isNotEmpty prepend="AND" property="searchZip">
+				<![CDATA[ ZIP like  '%' + #searchZip# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCtprvnNm">
+				<![CDATA[ CTPRVN_NM like  '%' + #searchCtprvnNm# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchSignguNm">
+				<![CDATA[ SIGNGU_NM like  '%' + #searchSignguNm# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchEmdNm">
+				<![CDATA[ EMD_NM like  '%' + #searchEmdNm# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchLiBuldNm">
+				<![CDATA[ LI_BULD_NM like  '%' + #searchLiBuldNm# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchLoadNm">
+				<![CDATA[ LOAD_NM like  '%' + #searchLoadNm# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchLnbrDongHo">
+				<![CDATA[ LNBR_DONG_HO like  '%' + #searchLnbrDongHo# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchLiBuldNmOld">
+				<![CDATA[ LI_BULD_NM_OLD like  '%' + #searchLiBuldNmOld# + '%'   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchLnbrDongHoOld">
+				<![CDATA[ LNBR_DONG_HO_OLD like  '%' + #searchLnbrDongHoOld# + '%'   ]]>
+			</isNotEmpty>	
+			
+			<isNotEmpty prepend="AND" property="searchKeyword">
+				<![CDATA[      CTPRVN_NM        LIKE  '%' + #searchKeyword# + '%'
+							OR SIGNGU_NM        LIKE  '%' + #searchKeyword# + '%'
+							OR EMD_NM           LIKE  '%' + #searchKeyword# + '%'
+							OR LI_BULD_NM       LIKE  '%' + #searchKeyword# + '%'
+							OR LOAD_NM          LIKE  '%' + #searchKeyword# + '%'
+							OR LI_BULD_NM_OLD   LIKE  '%' + #searchKeyword# + '%'
+							OR LNBR_DONG_HO_OLD LIKE  '%' + #searchKeyword# + '%'   ]]>
+			</isNotEmpty>
+			
+	</select>
+
+	<select id="ZipManageDAO.selectZipDetail" parameterClass="Zip" resultClass="Zip">
+		<![CDATA[
+			SELECT  ZIP           zip       
+			     ,  SN            sn        
+			     ,  CTPRVN_NM     ctprvnNm  
+			     ,  SIGNGU_NM     signguNm
+			     ,  EMD_NM        emdNm     
+			     ,  LI_BULD_NM    liBuldNm 
+			     ,  LOAD_NM       loadNm 
+			     ,  LNBR_DONG_HO  lnbrDongHo
+			     ,  LI_BULD_NM_OLD liBuldNmOld 
+			     ,  LNBR_DONG_HO_OLD  lnbrDongHoOld
+			  FROM  LETTCZIP			     
+             WHERE  ZIP = #zip#
+               AND  SN  = #sn#
+		]]>
+	</select>
+
+	<insert id="ZipManageDAO.insertZip">
+		<selectKey resultClass="int" keyProperty="sn">
+			SELECT  IFNULL(MAX(SEQ)+1,1)	sn
+			  FROM  LETTCZIP
+	    </selectKey>
+
+		<![CDATA[
+			INSERT 
+			  INTO  LETTCZIP
+			     (  ZIP         
+			     ,  SN          
+			     ,  CTPRVN_NM   
+			     ,  SIGNGU_NM   
+			     ,  EMD_NM      
+			     ,  LI_BULD_NM  
+			     ,  LOAD_NM  
+			     ,  LNBR_DONG_HO
+			     ,  LI_BULD_NM_OLD  
+			     ,  LNBR_DONG_HO_OLD
+			     ,  FRST_REGIST_PNTTM
+			     ,  FRST_REGISTER_ID
+			     ,  LAST_UPDT_PNTTM
+			     ,  LAST_UPDUSR_ID
+			     ) 
+			VALUES
+			     (  #zip#       
+			     ,  #sn#        
+			     ,  #ctprvnNm#  
+			     ,  #signguNm#  
+			     ,  #emdNm#     
+			     ,  #liBuldNm# 
+			     ,  #loadNm# 
+			     ,  #lnbrDongHo#
+			     ,  #liBuldNmOld# 
+			     ,  #lnbrDongHoOld#
+			     ,  SYSDATE()
+			     ,  #frstRegisterId#
+			     ,  SYSDATE()
+			     ,  #frstRegisterId#
+			     ) 
+		]]>
+	</insert>
+
+	<insert id="ZipManageDAO.insertExcelZip">
+		<![CDATA[
+			INSERT 
+			  INTO  LETTCZIP
+			     (  ZIP         
+			     ,  SN          
+			     ,  CTPRVN_NM   
+			     ,  SIGNGU_NM   
+			     ,  EMD_NM      
+			     ,  LI_BULD_NM  
+			     ,  LOAD_NM  
+			     ,  LNBR_DONG_HO
+			     ,  LI_BULD_NM_OLD  
+			     ,  LNBR_DONG_HO_OLD
+			     ,  FRST_REGIST_PNTTM
+			     ,  FRST_REGISTER_ID
+			     ,  LAST_UPDT_PNTTM
+			     ,  LAST_UPDUSR_ID
+			     ) 
+			VALUES
+			     (  #zip#       
+			     ,  #sn#        
+			     ,  #ctprvnNm#  
+			     ,  #signguNm#  
+			     ,  #emdNm#     
+			     ,  #liBuldNm# 
+			     ,  #loadNm# 
+			     ,  #lnbrDongHo#
+			     ,  #liBuldNmOld# 
+			     ,  #lnbrDongHoOld#
+			     ,  SYSDATE()
+			     ,  #frstRegisterId#
+			     ,  SYSDATE()
+			     ,  #frstRegisterId#
+			     ) 
+		]]>
+	</insert>
+
+	<update id="ZipManageDAO.updateZip">
+		<![CDATA[
+            UPDATE  LETTCZIP 
+               SET  CTPRVN_NM         = #ctprvnNm#  
+                 ,  SIGNGU_NM         = #signguNm#  
+                 ,  EMD_NM            = #emdNm#     
+                 ,  LI_BULD_NM        = #liBuldNm# 
+                 ,  LOAD_NM           = #loadNm# 
+                 ,  LNBR_DONG_HO      = #lnbrDongHo#
+                 ,  LI_BULD_NM_OLD    = #liBuldNmOld# 
+                 ,  LNBR_DONG_HO_OLD      = #lnbrDongHoOld#
+                 ,  LAST_UPDT_PNTTM = SYSDATE()
+                 ,  LAST_UPDUSR_ID    = #lastUpdusrId#
+             WHERE  ZIP               = #zip#
+               AND  SN                = #sn# 
+		]]>
+	</update>
+
+	<delete id="ZipManageDAO.deleteZip">
+		<![CDATA[
+            DELETE  
+              FROM  LETTCZIP     
+             WHERE  ZIP = #zip# 
+		]]>
+	</delete>
+
+	<delete id="ZipManageDAO.deleteAllZip">
+		<![CDATA[
+            DELETE  
+              FROM  LETTCZIP     
+		]]>
+	</delete>
+
+</sqlMap>            

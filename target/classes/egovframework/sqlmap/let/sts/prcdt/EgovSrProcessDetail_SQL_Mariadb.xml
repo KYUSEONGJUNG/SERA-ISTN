@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="SrProcessDetail">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="ProcessDetailVO" type="egovframework.let.sts.prcdt.service.ProcessDetailVO"/>
+	
+	
+	<resultMap id="processDetailReport" class="egovframework.let.sts.prcdt.service.ProcessDetailVO">
+		<result property="companyName" column="COMPANY_NAME"/>
+		<result property="requestDate" column="REQUEST_DATE"/>
+		<result property="srNo" column="SR_NO"/>
+		<result property="subject" column="SUBJECT"/>
+		<result property="requesterName" column="REQUESTER_NAME"/>
+		<result property="testCompleteDate" column="TEST_COMPLETE_DATE"/>
+		<result property="transferDate" column="TRANSFER_DATE"/>
+		<result property="expectTime" column="EXPECT_TIME"/>
+		<result property="answerSe" column="ANSWER_SE"/>
+		<result property="realExpectTime" column="REAL_EXPECT_TIME"/>
+		<result property="moduleName" column="MODULE_NAME"/>
+		<result property="responserName" column="RESPONSER_NAME"/>
+		<result property="completeDate" column="COMPLETE_DATE"/>
+		<result property="comment" column="COMMENT"/>
+	</resultMap>
+	
+	
+	<!-- SR처리 상세내역조회 -->
+	<select id="SrProcessDetailDAO.selectSrProcessDetail" parameterClass="ProcessDetailVO" resultClass="egovMap">
+		SELECT  * 
+		  FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.srNo, ALL_LIST.ANSWER_NO) RNUM, ALL_LIST.* 
+		  FROM  (
+		/* 구현 Sql */
+		SELECT (SELECT C.NAME 
+		  	 	  FROM SRCOMPANY C
+		 		 WHERE C.PSTINST_CODE = A.PSTINST_CODE 
+		          <!--  AND C.DEL_AT = 'N' --> ) AS compayName
+			 , LEFT(DATE_FORMAT( A.SIGN_DATE,'%Y-%m-%d'), 10) AS requestDate
+			 , A.SR_NO AS srNo
+			 , A.SUBJECT AS subject
+			 , (SELECT USER_NM 
+			      FROM LETTNEMPLYRINFO
+			     WHERE EMPLYR_ID = A.CUSTOMER_ID ) AS requesterName
+			 , DATE_FORMAT( A.TEST_COMPLETE_DATE,'%Y-%m-%d') AS testCompleteDate
+			 , DATE_FORMAT( A.COMPLETE_DATE,'%Y-%m-%d') AS transferDate
+			 , A.EXPECT_TIME AS expectTime
+			 , B.ANSWER_SE
+			 , B.REAL_EXPECT_TIME AS realExpectTime
+			 , (SELECT CODE_NM 
+			      FROM LETTCCMMNDETAILCODE 
+				 WHERE CODE_ID = 'SR0003' 
+				   AND CODE = A.MODULE_CODE) AS moduleName
+			 , (SELECT USER_NM
+			      FROM LETTNEMPLYRINFO 
+			     WHERE EMPLYR_ID = B.ID) AS responserName
+			 , DATE_FORMAT(B.SIGN_DATE,'%Y-%m-%d') AS completeDate
+			 , B.ANSWER_NO
+			FROM SRMANAGE A INNER JOIN SRMANAGE_ANSWER B 
+									ON A.SR_NO = B.SR_NO 
+		   WHERE 1 = 1
+			<isNotEmpty prepend="AND" property="pstinstCode">
+				A.PSTINST_CODE = #pstinstCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateT">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+				A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 	#searchStatus[]#
+			</iterate>
+			</isNotEmpty> 
+	    
+	    <![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+				    ) TA
+			 WHERE  RNUM  > #firstIndex#
+			   AND  RNUM <= #firstIndex# + #recordCountPerPage#
+		]]>	  	
+	</select>
+	
+	<!-- SR총 수량을 가져온다. -->
+	<select id="SrProcessDetailDAO.selectSrProcessDetailTotCnt" parameterClass="ProcessDetailVO" resultClass="int">
+		SELECT COUNT(*) as totCnt 
+		  FROM ( SELECT (SELECT C.NAME 
+				  	 	   FROM SRCOMPANY C
+				 		  WHERE C.PSTINST_CODE = A.PSTINST_CODE 
+				           <!--  AND C.DEL_AT = 'N'  -->) AS compayName
+					  , A.SIGN_DATE AS requestDate
+					  , A.SR_NO AS srNo
+					  , A.SUBJECT AS subject
+					  , (SELECT USER_NM 
+					       FROM LETTNEMPLYRINFO
+					      WHERE EMPLYR_ID = A.CUSTOMER_ID ) AS requesterName
+					  , DATE_FORMAT( A.TEST_COMPLETE_DATE,'%Y-%m-%d') AS testCompleteDate
+					  , DATE_FORMAT( A.COMPLETE_DATE,'%Y-%m-%d') AS transferDate
+					  , A.EXPECT_TIME AS expectTime
+					  , A.REAL_EXPECT_TIME AS realExpectTime
+					  , (SELECT CODE_NM 
+					       FROM LETTCCMMNDETAILCODE 
+						  WHERE CODE_ID = 'SR0003' 
+						    AND CODE = A.MODULE_CODE) AS moduleName
+					  , (SELECT USER_NM
+					       FROM LETTNEMPLYRINFO 
+					      WHERE EMPLYR_ID = B.ID) AS reponserName
+					  , DATE_FORMAT( B.SIGN_DATE,'%Y-%m-%d') AS completeDate
+					 FROM SRMANAGE A INNER JOIN SRMANAGE_ANSWER B 
+					     				ON A.SR_NO = B.SR_NO
+				    WHERE 1 = 1
+				<isNotEmpty prepend="AND" property="pstinstCode">
+					A.PSTINST_CODE = #pstinstCode#
+				</isNotEmpty>
+		        <isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchDateT">
+					<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchCompleteDateF">
+					<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchCompleteDateT">
+					<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchModuleCode">
+					<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+				</isNotEmpty>
+				
+				<isNotEmpty property="searchStatus" prepend="AND">
+				<![CDATA[
+					A.STATUS
+				]]>
+				<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+				 	#searchStatus[]#
+				</iterate>
+				</isNotEmpty>
+	        	) ALL_LIST
+	</select>
+	
+	<!-- SR 상세 처리내역 엑셀 다운로드 -->
+	<select id="SrProcessDetailDAO.excelDownProcessDetailReportList" parameterClass="ProcessDetailVO" resultMap="processDetailReport">
+		SELECT  * 
+		  FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.SR_NO, ALL_LIST.ANSWER_NO) RNUM, ALL_LIST.* 
+		  FROM  (
+		/* 구현 Sql */
+		SELECT (SELECT C.NAME 
+		  	 	  FROM SRCOMPANY C
+		 		 WHERE C.PSTINST_CODE = A.PSTINST_CODE 
+		          <!--  AND C.DEL_AT = 'N' -->) AS COMPANY_NAME
+			 , LEFT(DATE_FORMAT( A.SIGN_DATE,'%Y-%m-%d'), 10) AS REQUEST_DATE
+			 , A.SR_NO
+			 , A.SUBJECT
+			 , (SELECT USER_NM 
+			      FROM LETTNEMPLYRINFO
+			     WHERE EMPLYR_ID = A.CUSTOMER_ID ) AS REQUESTER_NAME
+			 , DATE_FORMAT( A.TEST_COMPLETE_DATE,'%Y-%m-%d')AS TEST_COMPLETE_DATE
+			 , DATE_FORMAT( A.COMPLETE_DATE,'%Y-%m-%d') AS TRANSFER_DATE
+			 , A.EXPECT_TIME
+			 , B.ANSWER_SE
+			 , B.REAL_EXPECT_TIME
+			 , (SELECT CODE_NM 
+			      FROM LETTCCMMNDETAILCODE 
+				 WHERE CODE_ID = 'SR0003' 
+				   AND CODE = A.MODULE_CODE) AS MODULE_NAME
+			 , (SELECT USER_NM
+			      FROM LETTNEMPLYRINFO 
+			     WHERE EMPLYR_ID = B.ID) AS RESPONSER_NAME
+			 , DATE_FORMAT( B.SIGN_DATE,'%Y-%m-%d') AS COMPLETE_DATE
+			 , B.COMMENT
+			 , B.ANSWER_NO
+			FROM SRMANAGE A INNER JOIN SRMANAGE_ANSWER B 
+									ON A.SR_NO = B.SR_NO
+		   WHERE 1 = 1
+			<isNotEmpty prepend="AND" property="pstinstCode">
+				A.PSTINST_CODE = #pstinstCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateF">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') >= #searchDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchDateT">
+				<![CDATA[ DATE_FORMAT( A.SIGN_DATE,'%Y%m%d') <= #searchDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateF">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') >= #searchCompleteDateF#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchCompleteDateT">
+				<![CDATA[ DATE_FORMAT( A.COMPLETE_DATE,'%Y%m%d') <= #searchCompleteDateT#   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="searchModuleCode">
+				<![CDATA[ A.MODULE_CODE = #searchModuleCode#   ]]>
+			</isNotEmpty>
+			
+			<isNotEmpty property="searchStatus" prepend="AND">
+			<![CDATA[
+				A.STATUS
+			]]>
+			<iterate prepend="IN" property="searchStatus" open="(" close=")" conjunction=",">
+			 	#searchStatus[]#
+			</iterate>
+			</isNotEmpty>
+	    
+	    <![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+				    ) TA
+		]]> 
+	</select>
+</sqlMap>

@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="SrObservanceRate">
+
+	<typeAlias  alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="SrObservanceRateVO" type="egovframework.let.sts.obsryrt.service.SrObservanceRateVO"/>
+	
+	<resultMap id="srObservanceRateReport" class="egovframework.let.sts.obsryrt.service.SrObservanceRateVO">
+		<result property="moduleName" column="MODULE_NAME"/>
+		<result property="moduleNameEn" column="MODULE_NAME_EN"/>
+		<result property="moduleNameCn" column="MODULE_NAME_CN"/>
+		<result property="signCnt" column="SIGN_CNT"/>
+		<result property="confirmCnt" column="CONFIRM_CNT"/>
+		<result property="inConfirmCnt" column="IN_CONFIRM_CNT"/>
+		<result property="completeCnt" column="COMPLETE_CNT"/>
+		<result property="inCompleteCnt" column="IN_COMPLETE_CNT"/>
+		<result property="inConfirmRate" column="IN_CONFIRM_RATE"/>
+		<result property="inCompleteRate" column="IN_COMPLETE_RATE"/>
+	</resultMap>
+		
+	<!-- SR처리율 조회 -->
+	<select id="SrObservanceRateDAO.selectSrObservanceRate" parameterClass="SrObservanceRateVO" resultClass="egovMap">
+				<!-- 모듈별 처리율 조회 -->
+			SELECT 
+				A.MODULE_CODE AS moduleCode
+				, B.CODE_NM AS moduleName
+				, B.CODE_NM_EN AS moduleNameEn
+				, B.CODE_NM_CN AS moduleNameCn
+				, COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END) AS signCnt
+				, COUNT(CASE WHEN STATUS >= '1003' THEN 1 END) AS  confirmCnt
+				, COUNT(CASE WHEN STATUS >= '1003' AND (DATE_FORMAT(SIGN_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d') OR DATE_FORMAT(SANCTNER_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d')) THEN 1 END) AS  inConfirmCnt
+				, COUNT(CASE STATUS WHEN '1006'  THEN 1 END) AS  completeCnt
+				, COUNT(CASE WHEN STATUS = '1006' AND SCHEDULE_DATE >= COMPLETE_DATE THEN 1 END) AS inCompleteCnt
+				, CASE WHEN COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END) =0
+					THEN 0
+					ELSE
+						ROUND((COUNT(CASE WHEN STATUS >= '1003' AND (DATE_FORMAT(SIGN_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d') OR DATE_FORMAT(SANCTNER_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d')) THEN 1 END)/COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END))*100, 2) 
+						END AS inConfirmRate
+				, CASE WHEN COUNT(CASE STATUS WHEN '1006'  THEN 1 END) = 0 
+					THEN 0 
+					ELSE 
+						ROUND((COUNT(CASE WHEN STATUS = '1006' AND SCHEDULE_DATE >= COMPLETE_DATE THEN 1 END)/COUNT(CASE STATUS WHEN '1006'  THEN 1 END))*100, 2) 
+						END AS inCompleteRate
+				FROM SRMANAGE A
+			LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+				ON  B.CODE_ID = 'SR0003' 
+				AND B.CODE = A.MODULE_CODE
+			WHERE 1=1
+				AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+				<isNotEmpty prepend="AND" property="pstinstCode">
+					PSTINST_CODE = #pstinstCode#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="rid">
+					RID = #rid#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchConfirmDateF">
+					<![CDATA[ DATE_FORMAT(SIGN_DATE, '%Y%m%d') >= #searchConfirmDateF#   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchConfirmDateT">
+					<![CDATA[ DATE_FORMAT(SIGN_DATE, '%Y%m%d') <= #searchConfirmDateT#   ]]>
+				</isNotEmpty>
+			GROUP by A.MODULE_CODE
+		   
+		   	UNION 
+		   		SELECT '9999' AS moduleCode
+		   			, '합계' AS moduleName
+		   			, 'Total' AS moduleNameEn
+		   			, '总计' AS moduleNameCn
+		   			, COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END) AS signCnt
+					, COUNT(CASE WHEN STATUS >= '1003' THEN 1 END) AS  confirmCnt
+					, COUNT(CASE WHEN STATUS >= '1003' AND (DATE_FORMAT(SIGN_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d') OR DATE_FORMAT(SANCTNER_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d')) THEN 1 END) AS  inConfirmCnt
+					, COUNT(CASE STATUS WHEN '1006'  THEN 1 END) AS  completeCnt
+					, COUNT(CASE WHEN STATUS = '1006' AND SCHEDULE_DATE >= COMPLETE_DATE THEN 1 END) AS inCompleteCnt
+					, CASE WHEN COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END) =0
+						THEN 0
+						ELSE
+							ROUND((COUNT(CASE WHEN STATUS >= '1003' AND (DATE_FORMAT(SIGN_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d') OR DATE_FORMAT(SANCTNER_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d')) THEN 1 END)/COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END))*100, 2) 
+							END AS inConfirmRate
+					, CASE WHEN COUNT(CASE STATUS WHEN '1006'  THEN 1 END) = 0 
+						THEN 0 
+						ELSE 
+							ROUND((COUNT(CASE WHEN STATUS = '1006' AND SCHEDULE_DATE >= COMPLETE_DATE THEN 1 END)/COUNT(CASE STATUS WHEN '1006'  THEN 1 END))*100, 2) 
+							END AS inCompleteRate
+					FROM SRMANAGE A
+					WHERE 1=1
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="rid">
+						RID = #rid#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchConfirmDateF">
+						<![CDATA[ DATE_FORMAT(SIGN_DATE, '%Y%m%d') >= #searchConfirmDateF#   ]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchConfirmDateT">
+						<![CDATA[ DATE_FORMAT(SIGN_DATE, '%Y%m%d') <= #searchConfirmDateT#   ]]>
+					</isNotEmpty>
+			
+	</select>
+	
+	<!-- SR총 수량을 가져온다. -->
+	<select id="SrObservanceRateDAO.selectSrObservanceRateTotCnt" parameterClass="SrObservanceRateVO" resultClass="int">
+		SELECT COUNT(*) as totCnt 
+		  FROM ( SELECT A.MODULE_CODE
+		  		   FROM SRMANAGE AS A
+				  WHERE 1 = 1  
+				    AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+					<isNotEmpty prepend="AND" property="pstinstCode">
+						A.PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+				 	<isNotEmpty prepend="AND" property="rid">
+						A.RID = #rid#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchConfirmDateF">
+						<![CDATA[ DATE_FORMAT(SIGN_DATE, '%Y%m%d') >= #searchConfirmDateF#   ]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchConfirmDateT">
+						<![CDATA[ DATE_FORMAT(SIGN_DATE, '%Y%m%d') <= #searchConfirmDateT#   ]]>
+					</isNotEmpty>	 	
+			         ) AS ALL_LIST	        
+	</select>
+	
+	<!-- 엑셀 다운로드 -->
+	<select id="SrObservanceRateDAO.excelDownProcessRateReportList" parameterClass="SrObservanceRateVO" resultMap="srObservanceRateReport">
+				<!-- 모듈별 처리율 조회 -->
+		SELECT  * 
+		  FROM  (
+		SELECT ROW_NUMBER() OVER (ORDER BY ALL_LIST.MODULE_CODE ASC) RNUM, ALL_LIST.*
+		     , CASE WHEN ALL_LIST.SIGN_CNT=0 
+		     			THEN 0 
+		     		ELSE 
+		     			Round((ALL_LIST.IN_CONFIRM_CNT/ALL_LIST.SIGN_CNT)*100,2) 
+		     	END AS IN_CONFIRM_RATE			<!-- 당일접수 준수율 -->	     
+		     , CASE WHEN ALL_LIST.COMPLETE_CNT=0 
+		     			THEN 0 
+		     		ELSE 
+		     			Round((ALL_LIST.IN_COMPLETE_CNT/ALL_LIST.COMPLETE_CNT)*100,2) 
+		     	END AS IN_COMPLETE_RATE	<!-- 납기 준수율 -->	     
+		  FROM  (
+			SELECT 
+				A.MODULE_CODE
+				, B.CODE_NM as MODULE_NAME
+				, B.CODE_NM_EN as MODULE_NAME_EN
+				, B.CODE_NM_CN as MODULE_NAME_CN
+				, COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END) AS SIGN_CNT
+				, COUNT(CASE WHEN STATUS >= '1003' THEN 1 END) AS  CONFIRM_CNT
+				, COUNT(CASE WHEN STATUS >= '1003' AND (DATE_FORMAT(SIGN_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d') OR DATE_FORMAT(SANCTNER_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d')) THEN 1 END) AS  IN_CONFIRM_CNT
+				, COUNT(CASE STATUS WHEN '1006'  THEN 1 END) AS  COMPLETE_CNT
+				, COUNT(CASE WHEN STATUS = '1006' AND SCHEDULE_DATE >= COMPLETE_DATE THEN 1 END) AS IN_COMPLETE_CNT
+				from SRMANAGE A
+			LEFT OUTER JOIN LETTCCMMNDETAILCODE B
+			    ON  B.CODE_ID = 'SR0003' 
+			    AND B.CODE = A.MODULE_CODE
+		    WHERE 1=1
+		   		AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+		   		<isNotEmpty property="pstinstCodeArr" prepend="AND">
+					<![CDATA[
+					 A.PSTINST_CODE
+					]]>
+					<iterate prepend="IN" property="pstinstCodeArr" open="(" close=")" conjunction=",">
+					 #pstinstCodeArr[]#
+					</iterate>
+				</isNotEmpty>
+		   		<isEmpty property="pstinstCodeArr">
+		   			<isNotEmpty prepend="AND" property="pstinstCode">
+						A.PSTINST_CODE = #pstinstCode#
+					</isNotEmpty>
+		   		</isEmpty>
+				<isNotEmpty prepend="AND" property="rid">
+					RID = #rid#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchConfirmDateF">
+					<![CDATA[ DATE_FORMAT(SIGN_DATE, '%Y%m%d') >= #searchConfirmDateF#   ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="searchConfirmDateT">
+					<![CDATA[ DATE_FORMAT(SIGN_DATE, '%Y%m%d') <= #searchConfirmDateT#   ]]>
+				</isNotEmpty>
+		   	GROUP BY A.MODULE_CODE
+		   
+		   	UNION 
+		   		SELECT '9999' AS MODULE_CODE
+		   			, '합계' AS MODULE_NAME
+		   			, 'Total' AS MODULE_NAME_EN
+		   			, '总计' AS MODULE_NAME_CN
+		   			, COUNT(CASE WHEN STATUS != '1000' AND STATUS != '1007' THEN 1 END) AS signCnt
+					, COUNT(CASE WHEN STATUS >= '1003' THEN 1 END) AS  confirmCnt
+					, COUNT(CASE WHEN STATUS >= '1003' AND (DATE_FORMAT(SIGN_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d') OR DATE_FORMAT(SANCTNER_DATE, '%Y-%m-%d') = DATE_FORMAT(CONFIRM_DATE, '%Y-%m-%d')) THEN 1 END) AS  inConfirmCnt
+					, COUNT(CASE STATUS WHEN '1006'  THEN 1 END) AS  completeCnt
+					, COUNT(CASE WHEN STATUS = '1006' AND SCHEDULE_DATE >= COMPLETE_DATE THEN 1 END) AS inCompleteCnt
+				FROM SRMANAGE A
+				WHERE 1=1
+					AND ((STATUS = '1001') OR (STATUS = '1002') OR (STATUS = '1003') OR (STATUS = '1004') OR (STATUS = '1005') OR (STATUS = '1006'))
+					<isNotEmpty property="pstinstCodeArr" prepend="AND">
+						<![CDATA[
+						 A.PSTINST_CODE
+						]]>
+						<iterate prepend="IN" property="pstinstCodeArr" open="(" close=")" conjunction=",">
+						 #pstinstCodeArr[]#
+						</iterate>
+					</isNotEmpty>
+			   		<isEmpty property="pstinstCodeArr">
+			   			<isNotEmpty prepend="AND" property="pstinstCode">
+							A.PSTINST_CODE = #pstinstCode#
+						</isNotEmpty>
+			   		</isEmpty>
+					<isNotEmpty prepend="AND" property="rid">
+						RID = #rid#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchConfirmDateF">
+						<![CDATA[ DATE_FORMAT(SIGN_DATE, '%Y%m%d') >= #searchConfirmDateF#   ]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="searchConfirmDateT">
+						<![CDATA[ DATE_FORMAT(SIGN_DATE, '%Y%m%d') <= #searchConfirmDateT#   ]]>
+					</isNotEmpty>
+			
+	    <![CDATA[
+			/* 구현 Sql */
+				    ) ALL_LIST
+			WHERE	1 = 1
+		]]>		    
+		<![CDATA[		    
+				    ) TA
+		]]>	
+	</select>
+</sqlMap>
